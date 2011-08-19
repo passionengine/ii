@@ -1,0 +1,13 @@
+{
+    "id": "shares",
+    "shares": {
+        "install": {
+            "comment": "Exported Share",
+            "locking":   "no",
+            "writeable": "no",
+            "path": "/var/unattended/install",
+            "guest ok": "yes"
+        }
+    }
+}
+
