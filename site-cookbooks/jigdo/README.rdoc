@@ -1,0 +1,12 @@
+= DESCRIPTION:
+
+= REQUIREMENTS:
+
+= ATTRIBUTES:
+
+= USAGE:
+
+jigdo_file "http://cdimage.ubuntu.com/ubuntustudio/releases/11.04/release/ubuntustudio-11.04-alternate-amd64.jigdo" do
+  cwd "/var/www/"
+  http_proxy 'localhost:8000'
+end
