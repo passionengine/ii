@@ -20,6 +20,21 @@
 
 
 default[:unattended][:iso][:torrents] = []
+default[:unattended][:workgroup] = 'WORKGROUP'
+default[:unattended][:domain] = ''
+default[:unattended][:orgname] = 'PassionEngine'
+default[:unattended][:adminpass] = 'passion'
+default[:unattended][:fullname] = 'Chris McClimans'
+default[:unattended][:top_scripts] = 'base.bat'
+default[:unattended][:middle_scripts] = 'emacs.bat gimp.bat'
+default[:unattended][:ntp_servers] = 'pool.ntp.org'
+default[:unattended][:top_scripts] = 'base.bat'
+default[:unattended][:media_base] = 'xpprosp3'
+default[:unattended][:xppro_key] = 'AAAAA-BBBBB-CCCCC-DDDDD-EEEEE'
+default[:unattended][:xphom_key] = 'AAAAA-BBBBB-CCCCC-DDDDD-EEEEE'
+default[:unattended][:partitions] = 'fdisk /clear 1;fdisk /pri:100,100;fdisk /delete /pri:1;fdisk /pri:4000;fdisk /activate:1'
+
+
 # could be something like:
 #[['xphomesp2',"http://torrents.mycompany.com/xphomesp2.torrent"],
 #[ 'xpprosp3',"http://torrents.mycompany.com/xpprosp3.torrent"],
