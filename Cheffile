@@ -1,0 +1,9 @@
+site 'http://community.opscode.com/api/v1'
+cookbook 'chef-server'
+cookbook 'users'
+cookbook 'transmission'
+#cookbook 'samba',
+# :git => 'https://github.com/hh/cookbooks.git',
+# :ref => 'f39ffed95e3432b51356a4068c305a156108618c',
+# :path => 'samba'
+
