@@ -1,0 +1,3 @@
+#!/bin/sh
+# Change '--config-file' to '-C /usr/local/etc/dnsmasq.conf'
+exec /usr/sbin/dnsmasq `echo $* | sed 's:--conf-file:-C /usr/local/etc/dnsmasq.conf:'`

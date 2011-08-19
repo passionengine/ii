@@ -1,0 +1,8 @@
+dhcp-match=gpxe,175
+dhcp-boot=net:#gpxe,ipxe.pxe
+dhcp-boot=http://<%= node[:ipaddress] -%>/pxelinux.0
+#dhcp-boot=http://<%= node[:ipaddress] -%>/default.ipxe
+#dhcp-boot=http://<%= node[:ipaddress] -%>:4567/?asset=${asset:uristring}&mac=${net0/mac}&uuid=${uuid}&serial=${serial:uristring}&manufacturer=${manufacturer:uristring}&product=${product:uristring}
+#dhcp-boot=http://<%= node[:ipaddress] -%>/pxelinux.0?asset=${asset:uristring}&mac=${net0/mac}&uuid=${uuid}&serial=${serial:uristring}&manufacturer=${manufacturer:uristring}&product=${product:uristring}
+#&user-class=${user-class:uristring}
+address=/ntinstall/<%= node[:ipaddress] -%>
