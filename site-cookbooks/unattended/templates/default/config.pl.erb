@@ -1,0 +1,367 @@
+# This module needs to include a conf-<configtype>.pl 
+# module that defineds two subroutines.  On called 'setup'
+# that calls setups up the interface to that module and
+# another called 'lookup_value' that returns a value for
+# a given Lookup,Property pair.
+#
+# Be sure to also look at the conf-csv.pl/conf-mysql.pl
+# in the lib directory for setup instructions.
+#
+# The following table shows what Lookup values are used for a
+# given Property value.  The order shown is the order searched.
+# The search ends when a valid entry is returned with the 
+# exception of UnattendedFile.  UnattendedFile will search and
+# apply all files in order listed.  Default is sort of redundant
+# for UnattendedFile as z:\site\unattend.txt is considered Default.
+#
+# Property                 Lookup Order
+# =====================    ========================================================
+# ComputerName             <macaddr>,Default
+# FullName                 <macaddr>,<ComputerName>,Default
+# OrgName                  <macaddr>,<ComputerName>,<FullName>,Default
+# JoinDomain               <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# JoinWorkgroup            <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# AdminPassword            <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# OS_media                 <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# <os_name> ProductKey     <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# <os_name> ProductID      <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# top_scripts              <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# middle_scripts           <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# bottom_scripts           <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# ntp_servers              <macaddr>,<ComputerName>,<FullName>,<OrgName>,Default
+# Partitions               <macaddr>,<ComputerName>,<os_name>,Default
+# fdisk_confirm            <macaddr>,<ComputerName>,<os_name>,Default
+# nt5x-install             <macaddr>,<ComputerName>,<os_name>,Default
+# replace_mbr              <macaddr>,<ComputerName>,<os_name>,Default
+# edit_files               <macaddr>,<ComputerName>,<os_name>,Default
+# DriverPath               <macaddr>,<ComputerName>,<os_name>,Default
+# UnattendedFile           Default,<os_name>,<OrgName>,<FullName>,<ComputerName>,<macaddr>
+
+use warnings;
+use strict;
+
+# Set db for mysql interface
+#require "conf-mysql.pl";
+#CONFIG->setup('DBI:mysql:database=unattended;host=192.168.2.1', 'username', 'password');
+
+# Set db for PostgreSQL interface
+#require "conf-mysql.pl";
+#CONFIG->setup('dbi:PgPP:dbname=unattended;host=192.168.2.1', 'username', 'password');
+
+# Setup db for CSV interface
+require "conf-csv.pl";
+CONFIG->setup(dos_to_host('z:\\site\\unattend.csv'), '', '');
+
+# Lookup property value using all possible owners
+sub lookup_property ($) {
+    my ($property) = @_;
+    defined $property
+        or return undef;
+    foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                        $u->{'UserData'}->{'ComputerName'},
+                        $u->{'UserData'}->{'FullName'},
+                        $u->{'UserData'}->{'OrgName'},
+                        'Default') {
+        my $value = CONFIG->lookup_value($lookup, $property);
+        defined $value
+            and return $value;
+    }
+    return undef;
+}
+
+# Lookup fdisk (partitioning) commands from database, if possible.
+$u->push_value ('_meta', 'fdisk_cmds',
+    sub {
+        my $os_media = $u->{'_meta'}->{'OS_media'};
+        defined $os_media
+            or return undef;
+        my $media_obj = Unattend::WinMedia->new ($os_media);
+        defined $media_obj
+            or return undef;
+        my $os_name = $media_obj->name ();
+        my $partitions;
+        foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                            $u->{'UserData'}->{'ComputerName'},
+                            "$os_name",
+                            'Default') {
+            my $value = CONFIG->lookup_value($lookup, 'Partitions');
+            defined $value
+                and return $value;
+        }
+        return undef;
+    });
+# Lookup fdisk confirmation from database, if possible.
+
+ $u->push_value ('_meta', 'fdisk_confirm',
+     sub {
+         my $os_media = $u->{'_meta'}->{'OS_media'};
+         defined $os_media
+             or return undef;
+         my $media_obj = Unattend::WinMedia->new ($os_media);
+         defined $media_obj
+             or return undef;
+         my $os_name = $media_obj->name ();
+         foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                             $u->{'UserData'}->{'ComputerName'},
+                             "$os_name",
+                             'Default') {
+             my $value = CONFIG->lookup_value($lookup, 'fdisk_confirm');
+             defined $value and
+                 $value =~ /^(y|yes|true|1)$/i and
+                 return $value;
+             defined $value and
+                 $value =~ /^(n|no|false|0)$/i and
+                 return 0; #wants' zero not a string
+         }
+         return undef;
+     });
+ 
+ # Lookup ntinstall_cmd from database, if possible.
+ $u->push_value ('_meta', 'ntinstall_cmd',
+     sub {
+         my $os_media = $u->{'_meta'}->{'OS_media'};
+         defined $os_media
+             or return undef;
+         my $media_obj = Unattend::WinMedia->new ($os_media);
+         defined $media_obj
+             or return undef;
+         my $os_name = $media_obj->name ();
+         foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                             $u->{'UserData'}->{'ComputerName'},
+                             "$os_name",
+                             'Default') {
+             my $value = CONFIG->lookup_value($lookup, 'nt5x-install');
+             defined $value and $value =~ /^(y|yes|true|1)$/i and
+                 return "nt5x-install";
+         }
+         return undef;
+     });
+ 
+ # Lookup replace_mbr from database, if possible.
+ $u->push_value ('_meta', 'replace_mbr',
+     sub {
+         my $os_media = $u->{'_meta'}->{'OS_media'};
+         defined $os_media
+             or return undef;
+         my $media_obj = Unattend::WinMedia->new ($os_media);
+         defined $media_obj
+             or return undef;
+         my $os_name = $media_obj->name ();
+         foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                             $u->{'UserData'}->{'ComputerName'},
+                             "$os_name",
+                             'Default') {
+             my $value = CONFIG->lookup_value($lookup, 'replace_mbr');
+             defined $value and
+                 return $value;
+         }
+         return undef;
+     });
+ 
+
+ # Lookup edit_files from database, if possible.
+ $u->push_value ('_meta', 'edit_files',
+     sub {
+         my $os_media = $u->{'_meta'}->{'OS_media'};
+         defined $os_media
+             or return undef;
+         my $media_obj = Unattend::WinMedia->new ($os_media);
+         defined $media_obj
+             or return undef;
+         my $os_name = $media_obj->name ();
+         foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                             $u->{'UserData'}->{'ComputerName'},
+                             "$os_name",
+                             'Default') {
+             my $value = CONFIG->lookup_value($lookup, 'edit_files');
+             defined $value and
+                 $value =~ /^(y|yes|true|1)$/i and
+                 return $value;
+             defined $value and
+                 $value =~ /^(n|no|false|0)$/i and
+                 return 0; #wants' zero not a string
+         }
+         return undef;
+     });
+
+# Lookup computer name from database, if possible.
+$u->push_value ('UserData', 'ComputerName', 
+    sub {
+        foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                            'Default') {
+            my $value = CONFIG->lookup_value($lookup, 'ComputerName');
+            defined $value
+                and return $value;
+        }
+        return undef;
+    });
+
+# Lookup owner name from database, if possible.
+$u->push_value ('UserData', 'FullName', 
+    sub {
+        foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                            $u->{'UserData'}->{'ComputerName'},
+                            'Default') {
+            my $value = CONFIG->lookup_value($lookup, 'FullName');
+            defined $value
+                and return $value;
+        }
+        return undef;
+    });
+
+# Lookup organization name from database, if possible.
+$u->push_value ('UserData', 'OrgName', 
+    sub {
+        foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+                            $u->{'UserData'}->{'ComputerName'},
+                            $u->{'UserData'}->{'FullName'},
+                            'Default') {
+            my $value = CONFIG->lookup_value($lookup, 'OrgName');
+            defined $value
+                and return $value;
+        }
+        return undef;
+    });
+
+# Lookup Domain from database, if possible.
+$u->push_value ('Identification', 'JoinDomain', sub { return lookup_property('JoinDomain'); });
+
+# Lookup Workgroup from database, if possible.
+$u->push_value ('Identification', 'JoinWorkgroup', sub { return lookup_property('JoinWorkgroup'); });
+
+# Lookup Admin password from database, if possible.
+$u->push_value ('GuiUnattended', 'AdminPassword', sub { return lookup_property('AdminPassword'); });
+# Lookup Timezone, if possible.
+$u->push_value ('GuiUnattended', 'TimeZone', sub { return lookup_property('TimeZone'); });
+
+
+# Lookup OS Directory from database, if possible.
+$u->push_value ('_meta', 'OS_media', 
+    sub { 
+        my $os_dir = $u->{'_meta'}->{'OS_dir'};
+        defined $os_dir
+            or return undef;
+        my $os_media = lookup_property('OS_media');
+        defined $os_media
+            or return undef;
+        $os_media =~ /^[a-z]:/i
+            or $os_media = $os_dir . '\\' . $os_media;
+        opendir OSMEDIA, dos_to_host ($os_media)
+            or return undef;
+        closedir OSMEDIA;
+        return $os_media;
+    });
+
+# Lookup product Key from database, if possible.
+$u->push_value ('UserData', 'ProductKey', 
+    sub {
+        my $media_obj = Unattend::WinMedia->new ($u->{'_meta'}->{'OS_media'});
+        my $os_name = $media_obj->name ();
+        defined $os_name
+            or return undef;
+        return lookup_property("$os_name ProductKey");
+    });
+
+# Lookup product ID from database, if possible.
+$u->push_value ('UserData', 'ProductID', 
+    sub {
+        my $media_obj = Unattend::WinMedia->new ($u->{'_meta'}->{'OS_media'});
+        my $os_name = $media_obj->name ();
+        defined $os_name
+            or return undef;
+        return lookup_property("$os_name ProductID");
+    });
+
+# Lookup "Top" level scripts from database, if possible.
+$u->push_value ('_meta', 'top', sub { lookup_property('top_scripts'); });
+
+# Lookup "Middle" level scripts from database, if possible.
+$u->push_value ('_meta', 'middle', sub { lookup_property('middle_scripts'); });
+
+# Lookup "Bottom" level scripts from database, if possible.
+$u->push_value ('_meta', 'bottom', sub { lookup_property('bottom_scripts'); });
+
+# Lookup NTP Servers from database, if possible.
+$u->push_value ('_meta', 'ntp_servers', sub { lookup_property('ntp_servers'); });
+# Lookup install command, if possible.
+$u->push_value ('_meta', 'ntinstall_cmd', sub { lookup_property('ntinstall_cmd'); });
+
+
+# Find all relevant drivers for this machine
+# $u->push_value ('Unattended', 'OemPnPDriversPath', 
+#     sub {
+#         my $os_media = $u->{'_meta'}->{'OS_media'};
+#         defined $os_media
+#             or return undef;
+#         my $media_obj = Unattend::WinMedia->new ($os_media);
+#         defined $media_obj
+#             or return undef;
+#         my $os_name = $media_obj->name ();
+#         my $os_drivers;
+#         foreach my $lookup ($u->{'_meta'}->{'macaddr'}, 
+#                             $u->{'UserData'}->{'ComputerName'},
+#                             "$os_name",
+#                             'Default') {
+#             $os_drivers = CONFIG->lookup_value($lookup, 'DriverPath');
+#             defined $os_drivers
+#                 and last;
+#         }
+#         defined $os_drivers 
+#             or return undef;
+#         $os_drivers =~ /^All$/i
+#             and $os_drivers = $os_media . '\\i386\\$oem$\\$1\\';
+#         $os_drivers =~ /^[a-z]:/i
+#             or $os_drivers = $os_media . '\\i386\\$oem$\\$1\\' . $os_drivers;
+#         opendir OSDRIVERS, dos_to_host ($os_drivers)
+#             or return undef;
+#         closedir OSDRIVERS;
+#         my @pnp_driver_dirs = $media_obj->oem_pnp_dirs (1, $os_drivers);
+#         scalar @pnp_driver_dirs > 0
+#             or return undef;
+#         print "...found some driver directories.\n";
+#         if (! $os_drivers =~ /\\i386\\\$oem\$\\\$1\\/) {
+#             print 'Copying $os_drivers to C:\\ (Still Broken)'; # FIXME
+#         }
+#         my $drivers = join ';', @pnp_driver_dirs;
+#         return $drivers;
+#     });
+#]
+# Lookup and read specific Unattended.txt files
+my $media_obj = Unattend::WinMedia->new ($u->{'_meta'}->{'OS_media'});
+my $os_name = $media_obj->name ();
+foreach my $lookup ("$os_name",
+                    $u->{'UserData'}->{'OrgName'},
+                    $u->{'UserData'}->{'FullName'},
+                    $u->{'UserData'}->{'ComputerName'},
+                    $u->{'_meta'}->{'macaddr'}) {
+    my $unattended_txt = CONFIG->lookup_value($lookup, 'UnattendedFile');
+    next unless defined $unattended_txt;
+    $unattended_txt =~ /^[a-z]:/i
+        or $unattended_txt = "z:\\site\\" . $unattended_txt;
+    $unattended_txt = dos_to_host ($unattended_txt);
+    -e ($unattended_txt)
+        and $u->read ($unattended_txt);
+}
+
+## Windows drivers scanning: uncomment to DISABLE its usage
+#$u->{'_temp'}->{'scan_windrivers'} = '';
+    
+## Windows drivers scanning: drivers collection root path:
+## default is "/z/drivers"  (in search-win-drivers.pl):
+$u->{'_temp'}->{'scan_windrivers_path'} = "/z/drivers/" ;
+    
+    ## Windows drivers scanning: use our patched version of ntx5-install
+    #$u->{'_meta'}->{'ntinstall_cmd'} = '/z/site/nt5x-install' ;
+    
+    ## Windows drivers scanning:
+    ##   howto exclude PCI_CLASSID Ethernet Controller (0x0200)
+    ##   from search of Windows Drivers scanning
+    #$u->{'_temp'}->{'scan_windrivers_options'} = '-c 0200' ;
+    
+    ## Windows drivers scanning: where to store matching driver(s)
+    ##   (relative to %systemdrive% once Windows is installed):
+    ## default is 'drv-scan' (in dosbin/install.pl)
+    #$u->{'_temp'}->{'scan_windrivers_dest'} = 'drvscan' ;
+
+# Make this file evaluate to "true".
+1;

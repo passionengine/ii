@@ -1,0 +1,9 @@
+# isolinux/pxelinux configuration file
+       DEFAULT menu.c32
+       # Prompt user for selection
+       PROMPT 0
+       TIMEOUT 30
+label PASSIONENGINE ii Windows XP Installer
+        kernel bzImage
+# Add options (z_user=..., z_path=..., etc.) to this line.
+        append initrd=initrd z_user=guest z_pass=guest z_path=//<%= node[:ipaddress] -%>/install
