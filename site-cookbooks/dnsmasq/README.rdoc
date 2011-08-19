@@ -1,0 +1,13 @@
+= DESCRIPTION:
+
+Ubuntu network sharing uses dnsmasq underneath, but doesn't allow for
+setting parametrs or config file (it's fed via STDIN). It does however
+search a few paths for dnsmasq! Hence the hack that allows us to turn on tftp and serve up gpxe etc.
+
+= REQUIREMENTS:
+
+= ATTRIBUTES:
+
+= USAGE:
+
+incude_recipe dnsmasq
