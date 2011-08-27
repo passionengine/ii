@@ -22,7 +22,7 @@ service 'dnsmasq'
 
 template "/etc/dnsmasq.d/dhcp-proxy.conf" do
   source "dhcp-proxy.conf.erb"
-  notifies :restart, "service[dnsmasq]"
+  #notifies :restart, "service[dnsmasq]" #FIXME: if I'm running  ubuntu sharing, it can't restart due to ports
 end
 
 remote_file "/var/www/ipxe.pxe" do

@@ -29,6 +29,9 @@ default_attributes(
                    "samba" => {
                      "interfaces" => "eth0 eth1",
                      "hosts_allow" => "0.0.0.0/32"
+                   },
+                   "unattended" => {
+                   "xp_pro_key" => 'MMX36-FRX2X-8XQYD-X77HV-XQY26'
                    }
                    )
 #FIXME: sambda should probably not listen everywhere, fix at some pont

@@ -81,7 +81,6 @@ end
 
 
 include_recipe 'transmission'
-
 directory "#{ua_dir}/iso"
 
 tuser=node['transmission']['rpc_username']
@@ -124,6 +123,12 @@ Dir['/var/unattended/iso/*.iso'].each do |isofile|
     # # put anything in this dir that you want on C:\
     #directory "#{ua_dir/install/os/#{shortname}/i386/$oem$/$1/"
   end
+  #FIXME: This is not required, it had to do with .reboot-on being removed... the error 195 kept us from moving forward
+  #package 'cabextract'
+  #execute "cabextract -d . #{ua_dir}/install/os/#{shortname}/i386/framedyn.dl_" do
+  #  cwd     "#{ua_dir}/install/bin"
+  #  creates "#{ua_dir}/install/bin/framedyn.dll"
+  #end
 end
 
 # this could be interesting.... but some of these websites don't have
@@ -152,6 +157,8 @@ Dir['/var/unattended/drivers/*.zip'].each do |driverzip|
     #directory "#{ua_dir/install/os/#{shortname}/i386/$oem$/$1/"
   end
 end
+
+
 
 # this just updates scripts from svn.... 
 # we won't do this
@@ -204,3 +211,19 @@ template "#{node[:pxe_dust][:directory]}/unattended-installer/pxelinux.cfg/defau
   source "pxelinux-default.erb"
   mode '0644'
 end
+
+# need to be prepared better, check to see if reboot-on is enabled and do an execute-block
+# Dir[dir + '/var/unattended/install/scripts/winxpsp3-*.bat'].each do |name|
+#   File.open(name, 'r+') do |f|
+#     new_file = f.read.gsub 'reboot-on', 'ignore-on'
+#     f.truncate 0
+#     f.write new_file
+#   end
+# end
+#
+# v3.17 isn't available for download.... it's now v3.22
+# File.open("/var/unattended/install/scripts/winxpsp3-extras.bat", 'r+') do |f|
+#   new_content = f.read.gsub 'v3.17.exe', 'v3.22.exe'
+#   f.truncate 0
+#   f.write new_content
+# end

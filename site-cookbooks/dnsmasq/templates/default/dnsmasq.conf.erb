@@ -1,8 +1,19 @@
 dhcp-match=gpxe,175
 dhcp-boot=net:#gpxe,ipxe.pxe
 dhcp-boot=http://<%= node[:ipaddress] -%>/pxelinux.0
+log-dhcp
+enable-tftp
+tftp-root=/var/www
+dhcp-no-override
 #dhcp-boot=http://<%= node[:ipaddress] -%>/default.ipxe
 #dhcp-boot=http://<%= node[:ipaddress] -%>:4567/?asset=${asset:uristring}&mac=${net0/mac}&uuid=${uuid}&serial=${serial:uristring}&manufacturer=${manufacturer:uristring}&product=${product:uristring}
 #dhcp-boot=http://<%= node[:ipaddress] -%>/pxelinux.0?asset=${asset:uristring}&mac=${net0/mac}&uuid=${uuid}&serial=${serial:uristring}&manufacturer=${manufacturer:uristring}&product=${product:uristring}
 #&user-class=${user-class:uristring}
 address=/ntinstall/<%= node[:ipaddress] -%>
+
+#pxe-prompt=net:#gpxe,"Automatically Installing Ubuntu", 2
+#pxe-service=net:#gpxe,X86PC, "Formatting your hard drive...", ubuntu-installer/amd64/pxelinux
+
+#### Boot to Windows Installer example
+pxe-prompt=net:#gpxe,"Automatically Installing Windows XP", 2
+pxe-service=net:#gpxe,X86PC, "Formatting your hard drive", unattended-installer/pxelinux
