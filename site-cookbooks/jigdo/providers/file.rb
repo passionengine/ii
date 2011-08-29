@@ -40,21 +40,32 @@ end
 def download_jigdo_template
 
   recipe_eval do
-    remote_file jigdo_file_path do 
-      Chef::Log.info("FOOO #{new_resource.inspect}")
-      source new_resource.source
-      action :nothing
+
+    if not ::File.exists?(jigdo_file_path)
+      remote_file jigdo_file_path do 
+        Chef::Log.info("FOOO #{new_resource.inspect}")
+        source new_resource.source
+      end
     end
 
-    http_request "HEAD #{new_resource.source}" do
-      message ""
-      url new_resource.source
-      action :head
-      if ::File.exists?(jigdo_file_path)
-        headers "If-Modified-Since" => ::File.mtime(jigdo_file_path).httpdate
-      end
-      notifies :create, resources(:remote_file => jigdo_file_path), :immediately
-    end
+    # Commented out a remote check to see if remote file is newer... jidgo's don't change that often
+    # and it slows down the chef-run
+
+    # remote_file jigdo_file_path do 
+    #   Chef::Log.info("FOOO #{new_resource.inspect}")
+    #   source new_resource.source
+    #   action :nothing
+    # end
+
+    # http_request "HEAD #{new_resource.source}" do
+    #   message ""
+    #   url new_resource.source
+    #   action :head
+    #   if ::File.exists?(jigdo_file_path)
+    #     headers "If-Modified-Since" => ::File.mtime(jigdo_file_path).httpdate
+    #   end
+    #   notifies :create, resources(:remote_file => jigdo_file_path), :immediately
+    # end
     
   end
   
@@ -67,20 +78,27 @@ def download_jigdo_template
   #chef checksum is SHA256, so the md5 listed here isn't useful
   #template_md5 = jigdo_content.grep(/Template-MD5Sum=()/).first.chomp.split('=')[1]
   recipe_eval do
-    remote_file template_local_path do 
-      source template_source_url
-      action :nothing
-    end
-
-    http_request "HEAD #{template_source_url}" do
-      message ""
-      url template_source_url
-      action :head
-      if ::File.exists?(template_local_path)
-        headers "If-Modified-Since" => ::File.mtime(template_local_path).httpdate
+    # Only download it once... no more checking 
+    if not ::File.exists?(template_local_path)
+      remote_file template_local_path do 
+        source template_source_url
       end
-      notifies :create, resources(:remote_file => template_local_path), :immediately
     end
+    # Could be useful to check remote and local timestamps, download if remote is newer
+    # remote_file template_local_path do 
+    #   source template_source_url
+    #   action :nothing
+    # end
+
+    # http_request "HEAD #{template_source_url}" do
+    #   message ""
+    #   url template_source_url
+    #   action :head
+    #   if ::File.exists?(template_local_path)
+    #     headers "If-Modified-Since" => ::File.mtime(template_local_path).httpdate
+    #   end
+    #   notifies :create, resources(:remote_file => template_local_path), :immediately
+    # end
   end
   
 end
