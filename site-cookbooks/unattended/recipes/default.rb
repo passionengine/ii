@@ -136,7 +136,14 @@ end
 directory "#{cache_dir}drivers"
 directory "#{cache_dir}torrents"
 
-node['unattended']['driverpack']['torrents'].each do |driver_file,t_sha256,t_file,t_url|
+node['unattended']['driverpack']['torrents'].each do |dpt|
+  #Driver Pack Torrent
+  next if dpt.class == Array #Why am I seeing an array here? It's not in the atrributes!
+  t_url = dpt[:url]
+  t_file = dpt[:torrent_filename]
+  t_sha256 = dpt[:sha256]
+  driver_file = dpt[:content_filename]
+  
   local_torrent_file = "#{cache_dir}torrents/#{t_file}"
   local_driver_file = "#{cache_dir}drivers/#{driver_file}"
 
@@ -144,7 +151,7 @@ node['unattended']['driverpack']['torrents'].each do |driver_file,t_sha256,t_fil
     source t_url
     backup false
     mode "0755"
-    checksum t_sha256
+    checksum t_sha256 if t_sha256
   end
 
   transmission_torrent_file local_driver_file  do
@@ -154,7 +161,6 @@ node['unattended']['driverpack']['torrents'].each do |driver_file,t_sha256,t_fil
     rpc_password tpass
     action :create
   end
-
 end
 
 
