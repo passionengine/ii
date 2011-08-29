@@ -17,6 +17,7 @@
 # limitations under the License.
 #
 
+require 'bencode' # for .bdecode on torrent
 require 'chef/file_cache'
 include_recipe 'dnsmasq'
 
@@ -130,6 +131,32 @@ Dir['/var/unattended/iso/*.iso'].each do |isofile|
   #  creates "#{ua_dir}/install/bin/framedyn.dll"
   #end
 end
+
+
+directory "#{cache_dir}drivers"
+directory "#{cache_dir}torrents"
+
+node['unattended']['driverpack']['torrents'].each do |driver_file,t_sha256,t_file,t_url|
+  local_torrent_file = "#{cache_dir}torrents/#{t_file}"
+  local_driver_file = "#{cache_dir}drivers/#{driver_file}"
+
+  remote_file local_torrent_file do
+    source t_url
+    backup false
+    mode "0755"
+    checksum t_sha256
+  end
+
+  transmission_torrent_file local_driver_file  do
+    torrent local_torrent_file
+    continue_seeding true
+    rpc_username tuser
+    rpc_password tpass
+    action :create
+  end
+
+end
+
 
 # this could be interesting.... but some of these websites don't have
 # direct download urls.... Dell hosts on google with an authkey...
