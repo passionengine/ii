@@ -138,7 +138,6 @@ directory "#{cache_dir}torrents"
 
 node['unattended']['driverpack']['torrents'].each do |dpt|
   #Driver Pack Torrent
-  next if dpt.class == Array #Why am I seeing an array here? It's not in the atrributes!
   t_url = dpt[:url]
   t_file = dpt[:torrent_filename]
   t_sha256 = dpt[:sha256]
