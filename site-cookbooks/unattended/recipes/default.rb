@@ -146,11 +146,13 @@ node['unattended']['driverpack']['torrents'].each do |dpt|
   local_torrent_file = "#{cache_dir}torrents/#{t_file}"
   local_driver_file = "#{cache_dir}drivers/#{driver_file}"
 
-  remote_file local_torrent_file do
+  remote_file "#{t_file} from #{t_url}" do
+    path local_torrent_file
     source t_url
     backup false
     mode "0755"
     checksum t_sha256 if t_sha256
+    not_if { File.exists? local_torrent_file }
   end
 
   transmission_torrent_file local_driver_file  do
