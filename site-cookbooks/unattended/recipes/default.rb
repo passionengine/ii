@@ -133,6 +133,7 @@ Dir['/var/unattended/iso/*.iso'].each do |isofile|
 end
 
 
+package 'p7zip'
 directory "#{cache_dir}drivers"
 directory "#{cache_dir}torrents"
 
@@ -162,7 +163,14 @@ node['unattended']['driverpack']['torrents'].each do |dpt|
     rpc_password tpass
     action :create
   end
+  
+  # I don't know the contents of these 7zip files, but I can track if I've decompressed them
+  execute "7zr x -y #{local_driver_file} && touch #{local_driver_file}.decompressed" do
+    cwd     "#{ua_dir}/install/drivers"
+    creates "#{local_driver_file}.decompressed" 
+  end
 end
+
 
 
 # this could be interesting.... but some of these websites don't have
@@ -192,6 +200,10 @@ Dir['/var/unattended/drivers/*.zip'].each do |driverzip|
   end
 end
 
+execute "#{ua_dir}/install/dosbin/search-win-drivers.pl -g -d . > search-win-drivers.cache" do
+  cwd     "#{ua_dir}/install/drivers"
+  creates "#{ua_dir}/install/drivers/search-win-drivers.cache"
+end
 
 
 # this just updates scripts from svn.... 
