@@ -124,13 +124,8 @@ Dir['/var/unattended/iso/*.iso'].each do |isofile|
     # # put anything in this dir that you want on C:\
     #directory "#{ua_dir/install/os/#{shortname}/i386/$oem$/$1/"
   end
-  #FIXME: This is not required, it had to do with .reboot-on being removed... the error 195 kept us from moving forward
-  #package 'cabextract'
-  #execute "cabextract -d . #{ua_dir}/install/os/#{shortname}/i386/framedyn.dl_" do
-  #  cwd     "#{ua_dir}/install/bin"
-  #  creates "#{ua_dir}/install/bin/framedyn.dll"
-  #end
 end
+
 
 
 package 'p7zip'
@@ -171,7 +166,131 @@ node['unattended']['driverpack']['torrents'].each do |dpt|
   end
 end
 
+# Might be interesting to slipstream this into the first boot...
+remote_file "#{cache_dir}/ruby-1.8.7-p352-i386-mingw32.7z" do
+  source "http://rubyforge.org/frs/download.php/75108/ruby-1.8.7-p352-i386-mingw32.7z"
+  checksum "f5b21458b5d28bbffc634692ff53cf0ebe81ac9f6699d95fa6de25f46f90a37b"
+  backup false
+  mode "0755"
+  not_if { File.exists? "#{cache_dir}/ruby-1.8.7-p352-i386-mingw32.7z" }
+end
 
+directory "#{ua_dir}install/packages/ruby"
+ruby_installer="#{ua_dir}install/packages/ruby/rubyinstaller-1.8.7-p352.exe"
+remote_file ruby_installer do
+  source "http://rubyforge.org/frs/download.php/75107/rubyinstaller-1.8.7-p352.exe"
+  checksum "4720388633ff4f0661032db7b7c00fbc701d2be733e273600431d1cb02c85700"
+  backup false
+  mode "0755"
+  not_if { File.exists? ruby_installer }
+end
+
+
+
+
+directory "#{ua_dir}install/packages/virtualbox"
+virtualbox_installer="#{ua_dir}install/packages/virtualbox/VirtualBox-4.1.2-73507-Win.exe"
+remote_file virtualbox_installer do
+  source "http://download.virtualbox.org/virtualbox/4.1.2/VirtualBox-4.1.2-73507-Win.exe"
+  checksum "dc0987219692f2d9fee90ab06ce2d2413fb620e5a00733628935be974d42c11d"
+  backup false
+  mode "0755"
+  not_if { File.exists? virtualbox_installer }
+end
+
+virtualbox_extpack="#{ua_dir}install/packages/virtualbox/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
+remote_file virtualbox_extpack do
+  source "http://download.virtualbox.org/virtualbox/4.1.2/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
+  checksum "3bc5ad8d7082b6debeec24c40a86629bf0ad6313343532d0ad0fee4131e8f9fc"
+  backup false
+  mode "0755"
+  not_if { File.exists? virtualbox_extpack }
+end
+
+
+directory "#{ua_dir}install/packages/python"
+python_installer="#{ua_dir}install/packages/python/python-2.7.2.msi"
+remote_file python_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? python_installer }
+  source "http://www.python.org/ftp/python/2.7.2/python-2.7.2.msi"
+  checksum "b99c20bece1fe4ac05844aea586f268e247107cd0f8b29593172764c178a6ebe"
+end
+
+
+
+
+# virtualbox-additions
+vboxadd_iso_path=node['unattended']['virtualbox']['additions_iso']
+package 'virtualbox-guest-additions' do 
+  # I think we need 4.1 as well, need to check
+  not_if { File.exists? vboxadd_iso_path }
+end
+
+mountdir="#{cache_dir}/driveriso"
+local_driver_dir = "#{ua_dir}/install/drivers"
+bash "copy contents of #{vboxadd_iso_path} to #{local_driver_dir}" do
+  creates "#{local_driver_dir}/VBoxWindowsAdditions-amd64.exe" #and "#{local_driver_dir}/VBoxWindowsAdditions-x86.exe"
+  code <<-EOH
+      mkdir -p #{mountdir}
+      mount -o loop,nojoliet #{vboxadd_iso_path} #{mountdir}
+      cp #{mountdir}/VBoxWindowsAdditions-amd64.exe #{local_driver_dir}
+      cp #{mountdir}/VBoxWindowsAdditions-x86.exe #{local_driver_dir}
+      umount #{mountdir}
+  EOH
+end
+
+
+package 'wine1.3' do
+  response_file 'wine.seed' #windows font eula... maybe we should alert user
+end
+
+winehome=File.join(cache_dir,'winehome')
+directory winehome
+
+
+# might be nicer to have wine dump it to somewhere within the cache or target dir
+execute "wine #{local_driver_dir}/VBoxWindowsAdditions-x86.exe /S /extract /D=C:\\\\tmp" do
+  cwd winehome
+  environment ({'HOME'=>winehome})
+  creates "#{winehome}/.wine/drive_c/tmp/x86"
+end
+execute "wine #{local_driver_dir}/VBoxWindowsAdditions-amd64.exe /S /extract /D=C:\\\\tmp" do
+  cwd winehome
+  environment ({'HOME'=>winehome})
+  creates "#{winehome}/.wine/drive_c/tmp/amd64"
+end
+
+execute "cp -a #{winehome}/.wine/drive_c/tmp/amd64 #{local_driver_dir}/VBoxWindowsAdditions-amd64" do
+  creates "#{local_driver_dir}/VBoxWindowsAdditions-amd64"
+end
+execute "cp -a #{winehome}/.wine/drive_c/tmp/x86 #{local_driver_dir}/VBoxWindowsAdditions-x86" do
+  creates "#{local_driver_dir}/VBoxWindowsAdditions-x86"
+end
+
+execute "wine #{virtualbox_installer} -x -s -l -p C:\\\\vbox" do
+  cwd winehome
+  environment ({'HOME'=>winehome})
+  creates "#{winehome}/.wine/drive_c/vbox/common.cab"
+end
+
+execute "cp -a #{winehome}/.wine/drive_c/vbox/* #{ua_dir}install/packages/virtualbox/" do
+  creates "#{ua_dir}install/packages/virtualbox/common.cab"
+end
+
+
+template "/var/unattended/install/scripts/vboxadd.bat" do
+  source "virtualbox.bat.erb"
+  mode '0644'
+end
+
+template "/var/unattended/install/scripts/vboxbase.bat" do
+  source "vboxbase.bat.erb"
+  mode '0644'
+end
+
+#~/.wine/drive_c/tmp/{x86|amd64}
 
 # this could be interesting.... but some of these websites don't have
 # direct download urls.... Dell hosts on google with an authkey...
@@ -248,9 +367,13 @@ template "/var/unattended/install/site/config.pl" do
   mode '0644'
 end
 
+vboxes = search("virtualboxen", "*:*")
 template "/var/unattended/install/site/unattend.csv" do
   source "unattend.csv.erb"
   mode '0644'
+  variables(
+    :virtualboxen => vboxes
+  )
 end
 
 template "#{node[:pxe_dust][:directory]}/unattended-installer/pxelinux.cfg/default" do
