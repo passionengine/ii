@@ -37,13 +37,17 @@ vbox.storage_controllers[0].controller_type = :ich6 #or :piix4
 vbox.boot_order=[:hard_disk ,:network,:null,:null]
 vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/BootFile']='pxelinux.0'
 vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/TFTPPrefix']='/var/www'
+vbox.extra_data['VBoxInternal/Devices/VMMDev/0/Config/KeepCredentials']='1'
 
 nic = vbox.network_adapters[0]
 nic.attachment_type = :nat
 nic.enabled = true
 nic.save
-
 vbox.save
+
+# requires a real tftp server
+#`VBoxManage modifyvm "#{vbox.name}" --nattftpserver1 192.168.2.7`
+#`VBoxManage modifyvm "#{vbox.name}" --nattftpfile1 pxelinux.0`
 
 if not Chef::DataBag.cdb_list.include? 'virtualboxen'
   Chef::DataBag.json_create({'name'=>'virtualboxen'}).save
@@ -57,6 +61,40 @@ Chef::DataBagItem.json_create({
     }
   }).save
 
-vbox.start 
+# This doesn't seem possible from Ruby yet:
+# http://www.virtualbox.org/manual/ch09.html#autologon_win
+# 
 
+vbox.start
+# Must be run against started virtualbox, will be cached until it is read from windows gina
+`VBoxManage controlvm "#{vbox.name}" setcredentials "administrator" "passion" "none" --allowlocallogon yes`
+# Should probably just setcredentials on every boot, unless there are security concerns
+
+
+
+# Poweroff
+#`VBoxManage controlvm "#{vbox.name}" acpipowerbutton`
+# Send keyboardscancode
+#`VBoxManage controlvm "#{vbox.name}" keyboardputscancode 12`
+# Screenshot
+#`VBoxManage controlvm "#{vbox.name}" screenshotpng /tmp/foo.png`
+# Snapshots:
+# Take:
+# `VBoxManage snapshot "#{vbox.name}" take "snapshot123" --description "SnapShot123" --pause`
+# Restore: (vbox must be stopped)
+#  vbox.stop
+# `VBoxManage snapshot "#{vbox.name}" restore "snapshot123"`
+# OR
+# `VBoxManage snapshot "#{vbox.name}" restorecurrent
+#  vbox.start
+# `VBoxManage modifyvm "#{vbox.name}" --nattftpserver1 10.0.2.2`
+# `VBoxManage modifyvm "#{vbox.name}" --nattftpfile1 /srv/tftp/boot/MyPXEBoot.pxe`
+
+
+# `VBoxManage clonevm "#{vbox.name}" --register --name "#{vbox.name} New Clone"`
+# `VBoxManage clonevm "#{vbox.name}" --register --name "#{vbox.name} New Clone w/ Snapshots" --mode all`
+
+# `VBoxManage export "#{vbox.name}" \
+# -o /tmp/my.ova \
+# --vsys 0 --product ii --producturl ii.code.org.nz --vendor PassionEngine --vendorurl PassionEngine.org --version 0.1`
 # now to monitor reboots and such and save at various stages
