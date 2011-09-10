@@ -22,18 +22,24 @@ controller_name='Ye Olde IDE Controller'
 vbox.with_open_session do |session|
   machine = session.machine
   #possibly change the screen on each boot... for demo?
-  session.machine.bios_settings.logo_image_path='/var/www/ii.bmp' #256/8bit BMP
-  session.machine.bios_settings.logo_display_time=3000 #3 seconds in ms
-  session.machine.bios_settings.pxe_debug_enabled=true
+  machine.bios_settings.logo_image_path='/var/www/ii.bmp' #256/8bit BMP
+  machine.bios_settings.pxe_debug_enabled=true
+  #machine.create_shared_folder 'Sharename', '/path', RW?, Automount?
+  machine.create_shared_folder 'HostRoot', '/', false, true
+  machine.create_shared_folder 'Unattended', '/var/unattended/install', false, true
+  machine.create_shared_folder 'Tmp', '/tmp', true, true
   machine.add_storage_controller controller_name, :ide
   machine.attach_device(controller_name, 0, 0, :hard_disk, newhd.interface)
   machine.attach_device(controller_name, 0, 1, :dvd, nil) 
 end
+# YES
+# vbox.control 'power_down'
 
+#          function :create_shared_folder, nil, [WSTRING, WSTRING, T_BOOL, T_BOOL]
 
 vbox.storage_controllers[0].controller_type = :ich6 #or :piix4
 
-# this will boot from network only if we can't boot from disk
+# this will boot from nerk only if we can't boot from disk
 vbox.boot_order=[:hard_disk ,:network,:null,:null]
 vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/BootFile']='pxelinux.0'
 vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/TFTPPrefix']='/var/www'
