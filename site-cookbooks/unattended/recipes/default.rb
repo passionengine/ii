@@ -175,6 +175,8 @@ remote_file "#{cache_dir}/ruby-1.8.7-p352-i386-mingw32.7z" do
   not_if { File.exists? "#{cache_dir}/ruby-1.8.7-p352-i386-mingw32.7z" }
 end
 
+#http://msysgit.googlecode.com/files/Git-1.7.6-preview20110708.exe
+
 directory "#{ua_dir}install/packages/ruby"
 ruby_installer="#{ua_dir}install/packages/ruby/rubyinstaller-1.8.7-p352.exe"
 remote_file ruby_installer do
@@ -185,6 +187,35 @@ remote_file ruby_installer do
   not_if { File.exists? ruby_installer }
 end
 
+rubydev_installer="#{ua_dir}install/packages/ruby/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
+remote_file rubydev_installer do
+  source "http://github.com/downloads/oneclick/rubyinstaller/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
+  checksum "6230d9e552e69823b83d6f81a5dadc06958d7a17e10c3f8e525fcc61b300b2ef"
+  backup false
+  mode "0755"
+  not_if { File.exists? rubydev_installer }
+end
+
+devdir = "#{ua_dir}/install/packages/ruby/dev"
+directory devdir
+# 7zr creats directories that have a mode of 700, and are unreadable... 
+# even though I set the umask... frustrating... so I add the find
+execute "7zr x -y #{rubydev_installer}; find . -type d -exec chmod go+rx \\\{\\\} \\\;" do
+  cwd     devdir
+  creates "#{devdir}/bin/true.exe" 
+  umask "022"
+end
+
+
+
+wmf_installer="#{ua_dir}install/packages/ruby/WindowsXP-KB968930-x86-ENG.exe"
+remote_file wmf_installer do
+  source "http://download.microsoft.com/download/E/C/E/ECE99583-2003-455D-B681-68DB610B44A4/WindowsXP-KB968930-x86-ENG.exe"
+  checksum "0ef2a9b4f500b66f418660e54e18f5f525ed8d0a4d7c50ce01c5d1d39767c00c"
+  backup false
+  mode "0755"
+  not_if { File.exists? wmf_installer }
+end
 
 
 
@@ -218,8 +249,105 @@ remote_file python_installer do
   checksum "b99c20bece1fe4ac05844aea586f268e247107cd0f8b29593172764c178a6ebe"
 end
 
+pik_installer="#{ua_dir}install/packages/ruby/pik-0.3.0.pre.msi"
+remote_file pik_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? pik_installer }
+  source "https://github.com/downloads/vertiginous/pik/pik-0.3.0.pre.msi"
+  checksum "16d7c0c5bfa30f36ded41e8cfb7691024273aca5a77654257a44ba3e29d4534a"
+end
 
 
+directory "#{ua_dir}install/packages/microsoft"
+dotnetsp1_installer="#{ua_dir}install/packages/microsoft/NetFx20SP1_x86.exe"
+remote_file dotnetsp1_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? dotnetsp1_installer }
+  source "http://download.microsoft.com/download/0/8/c/08c19fa4-4c4f-4ffb-9d6c-150906578c9e/NetFx20SP1_x86.exe"
+  checksum "c36c3a1d074de32d53f371c665243196a7608652a2fc6be9520312d5ce560871"
+end
+
+dotnet_installer="#{ua_dir}install/packages/microsoft/dotnetfx.exe"
+# :: dotnetfx.exe /?
+# :: /Q -- Quiet modes for packgage.
+# :: /T:<full path> -- Specifies temporary working folder,
+# :: /C -- Extract files only to the folder when also used with /T
+# :: /C:<cmd> -- Override Install Command defined by author
+
+# todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
+remote_file dotnet_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? dotnet_installer }
+  source "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe"
+  checksum "46693d9b74d12454d117cc61ff2e9481cabb100b4d74eb5367d3cf88b89a0e71"
+end
+
+dotnet35_installer="#{ua_dir}install/updates/common/dotnetfx35-sp1.exe"
+
+# :: dotnetfx.exe /?
+# :: /Q -- Quiet modes for packgage.
+# :: /T:<full path> -- Specifies temporary working folder,
+# :: /C -- Extract files only to the folder when also used with /T
+# :: /C:<cmd> -- Override Install Command defined by author
+
+# todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
+remote_file dotnet35_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? dotnet35_installer }
+  source "http://download.microsoft.com/download/2/0/e/20e90413-712f-438c-988e-fdaa79a8ac3d/dotnetfx35.exe"
+  #checksum "46693d9b74d12454d117cc61ff2e9481cabb100b4d74eb5367d3cf88b89a0e71"
+end
+
+dotnet4_installer="#{ua_dir}install/updates/common/dotNetFx40_Full_x86_x64.exe"
+# dotNetFx40_Full_x86_x64.exe /?
+# /CIEPconsent - Optionally send anonymous feedback to improve the customer experience
+# /chainingpackage <name> - Optionally record the name of a package chaining this one
+# /createlayout <full path> - Download all files and associated resources to the specified location. Perform no other action *Disabled*
+# /lcid - Set the display language to be used by this program, if possible. example: /lcid 1031
+# /log <file | folder> - Location of the log fil. Default is the process temporary folder with a name based on the package
+# /msioptions - Specify options to be passed for .msi and msp items. Example: /msioptins: "PROPERTY1='Value'"
+# /norestart - If the operation requires a reboot to complete, Setup should neither prompt nor cause a reboot
+# /passive - Shows progress bar advancing but requires no user interaction
+# /showfinalerror - Passive mode only: shows final page if the install is not successful
+# /pipe <name> - Optionally create a communication channel to allow a chaining package to get progress
+# /promptrestart - If the operation requires a reboot to complete, Setup should prompt, and trigger it if the user agrees
+# /q - Quiet mode, no user input required or output shown.
+# /repair - Repair the payloads
+# /serialdownload - Force install operation to happen only after all the payload is downloaded
+# /uninstall - Uninstall the payloads
+# /parameterfolder <full path> - Specifies the path to the Setup's configuration and data files
+# /NoSetupVersionCheck - Do net check ParameterInfo.xml for setup version conflicts
+# /uninstallpatch {patch code} - Removes the update for all products the patch has been applied to
+# ex:
+# Silently install the package and create log file SP123.htm in the temp folder:
+# Setup.exe /q /log %temp%\SP123.htm
+# Install with no user interaction unless a reboot is needed to complete the operation:
+# Setup /passive /promptrestart
+#
+# Some command line switches are disabled for this package: createlayout
+
+# todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
+remote_file dotnet4_installer do
+  mode "0755"
+  backup false
+  not_if { File.exists? dotnet4_installer }
+  source "http://download.microsoft.com/download/9/5/A/95A9616B-7A37-4AF6-BC36-D6EA96C8DAAE/dotNetFx40_Full_x86_x64.exe"
+  checksum "65e064258f2e418816b304f646ff9e87af101e4c9552ab064bb74d281c38659f"
+end
+
+# http://technet.microsoft.com/en-us/sysinternals/bb896645.aspx
+procmon_exe="#{ua_dir}install/updates/common/Procmon.exe"
+remote_file procmon_exe do
+  mode "0755"
+  backup false
+  not_if { File.exists? procmon_exe }
+  source "http://live.sysinternals.com/Procmon.exe"
+  checksum "a8898d37f8b0d3b534128abe4f086d7cb7c76c7918df28c015c3f47f9be69880"
+end
 
 # virtualbox-additions
 vboxadd_iso_path=node['unattended']['virtualbox']['additions_iso']
@@ -277,6 +405,17 @@ end
 
 execute "cp -a #{winehome}/.wine/drive_c/vbox/* #{ua_dir}install/packages/virtualbox/" do
   creates "#{ua_dir}install/packages/virtualbox/common.cab"
+end
+
+execute "wine #{dotnet_installer} /C /T:C:\\\\dotnet" do
+  cwd winehome
+  environment ({'HOME'=>winehome})
+  creates "#{winehome}/.wine/drive_c/dotnet/install.exe"
+end
+
+directory "#{ua_dir}install/packages/microsoft/dotnet"
+execute "cp -a #{winehome}/.wine/drive_c/dotnet/* #{ua_dir}install/packages/microsoft/dotnet" do
+  creates "#{ua_dir}install/packages/microsoft/dotnet/install.exe"
 end
 
 
