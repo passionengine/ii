@@ -17,3 +17,8 @@
 "Default","Windows XP Professional ProductKey","<%= node.unattended.xp_pro_key -%>"
 "Default","Windows XP Home Edition ProductKey","<%= node.unattended.workgroup -%>"
 "Default","Partitions","<%= node.unattended.partitions -%>"
+<%# Too bad we can't just glob as all virtualboxes mac_addresses start with "080027*" %>
+<% @virtualboxen.each do |box| -%>
+"<%= box['mac_address'] %>","ComputerName","<%= box['id'] %>"
+"<%= box['id'] %>","top_scripts","vboxbase.bat"
+<% end -%>
