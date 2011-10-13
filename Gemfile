@@ -4,6 +4,8 @@ gem "chef"
 gem "pcap"
 gem "sinatra"
 gem "vagrant", "~> 0.8"
+gem "veewee"
+gem "rubypython"
 gem "virtualbox", :git => "git://github.com/hh/virtualbox.git" , :branch => "fromscratch"
 gem "ruby-debug"
 
