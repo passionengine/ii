@@ -1,0 +1,27 @@
+
+
+
+
+
+
+
+
+
+
+
+:ii Network boot system
+---------------------
+If setup Windows XP and it's associated software, you are not allowed
+to share the Windows install CD with others.
+
+If install Linux, you are both encouraged and have the freedom to share
+with the world. But, deepending on how technical you are, it can be
+somewhat daunting (at least at first).
+
+If install everything needed to become an :ii 'super computer', this
+computer will be able to create more 'normal' windows and linux computers
+as well as being able to create more 'super computers'.
+We finally have a computer infrastructure that can bootstrap itself!
+
+Cheers,
+The Hippie Hacker 

@@ -1,0 +1,87 @@
+DEFAULT vesamenu.c32
+PROMPT 0
+MENU TITLE What would you like to do to this computer?
+MENU INCLUDE pxelinux.cfg/graphics.conf
+<% case @default %>
+<% when :windows %>
+MENU AUTOBOOT Installing Windows in # seconds
+timeout 50
+TOTALTIMEOUT 100
+<% when :ubuntu %>
+MENU AUTOBOOT Installing Ubuntu in # seconds
+timeout 50
+TOTALTIMEOUT 100
+<% when :ubuntu64 %>
+MENU AUTOBOOT Installing a Super Computer in # seconds
+timeout 50
+TOTALTIMEOUT 100
+<% else %>
+MENU AUTOBOOT Starting Local System in # seconds
+timeout 9000
+TOTALTIMEOUT 90000
+<% end %>
+F1 help.txt pxebootsplash-help.jpg
+
+label iixp
+  menu label Erase everything and install ^Windows XP
+  <%= 'MENU DEFAULT' if @default == :windows %>
+  kernel unattended-installer/bzImage
+  # Add options (z_user=..., z_path=..., etc.) to this line.
+  append initrd=unattended-installer/initrd z_user=guest z_pass=guest z_path=//<%= node[:ipaddress] %>/install
+
+label installi386
+	menu label Erase everything and install ^Linux
+  <%= 'MENU DEFAULT' if @default == :ubuntu %>
+	kernel ubuntu-installer/i386/linux
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/i386/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=iiSFD netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+
+
+label install
+	menu label Erase everything and setup a ^Super Computer
+  <%= 'MENU DEFAULT' if @default == :ubuntu64 %>
+	kernel ubuntu-installer/<%= node[:pxe_dust][:arch] %>/linux
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=iiSFD netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+
+
+label local
+MENU LABEL Just boot what is already installed.
+<%= 'MENU DEFAULT' if @default == :local %>
+LOCALBOOT 0
+# TEXT HELP
+# Press F1 for help
+# ENDTEXT
+
+# LABEL rhel
+# MENU LABEL ^Red Hat Enterprise Linux
+# KERNEL vesamenu.c32
+# APPEND pxelinux.cfg/graphics.conf pxelinux.cfg/rhel.menu
+
+# LABEL centos
+# MENU LABEL ^CentOS installers
+# KERNEL vesamenu.c32
+# APPEND pxelinux.cfg/graphics.conf pxelinux.cfg/centos.menu
+
+# LABEL mandriva
+# MENU LABEL ^Mandriva network installers
+# KERNEL vesamenu.c32
+# APPEND pxelinux.cfg/graphics.conf pxelinux.cfg/mandriva.menu
+
+# LABEL pxeknife
+#      MENU PASSWD mypassword
+#      MENU LABEL ^PXE Swiss army knife 
+#      KERNEL vesamenu.c32
+#      APPEND pxelinux.cfg/graphics.conf pxeknife/pxeknife.conf
+
+# LABEL imaging
+# MENU LABEL ^Imaging solutions
+# KERNEL vesamenu.c32
+# APPEND pxelinux.cfg/graphics.conf pxelinux.cfg/imaging.menu
+
+#LABEL memtest
+#      menu label Memory ^Test: Memtest86+ v2.11
+#      kernel Memtest/memtest
+
+# LABEL freedos
+#       menu label ^FreeDos
+#       kernel memdisk
+#       append initrd=freedos/balder10.img

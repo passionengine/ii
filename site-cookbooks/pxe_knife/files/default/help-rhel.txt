@@ -1,0 +1,24 @@
+
+
+
+
+
+
+
+
+
+
+
+RedHat Enterprise Linux Kernel options
+---------------------
+Rescue mode: linux rescue
+
+Kickstart:
+ks=nfs:<server>:/<path>
+Example: ks=nfs:bootserver1:/swrepo/ISO/Linux/RedHat/x86_64/5.3-DVD/ibm-x3650-ks.cfg
+ks=http://<server>/<path>
+ks=floppy
+ks=floppy:/<path>
+ks=hd:<device>:/<file>  -  on USB drive:  ks=hd:sda1/ks.cfg
+ks=file:/<file>
+ks=cdrom:/<path>
