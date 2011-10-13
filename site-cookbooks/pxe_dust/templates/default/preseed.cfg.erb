@@ -1,4 +1,5 @@
 ### Mirror settings
+#d-i preseed/early_command string ?
 d-i mirror/country string NZ
 #d-i mirror/country string manual
 #d-i mirror/http/hostname string <%= @node[:ipaddress] %>:8000
@@ -12,10 +13,11 @@ d-i mirror/udeb/components multiselect main, restricted, universe, multiverse
 # go ahead and automatically reboot
 d-i finish-install/reboot_in_progress note
 
-# dvorak!
+# os OR dvorak!
 #keyboard-configuration keyboard-configuration/layoutcode string ctrl:nocaps
 d-i keyboard-configuration/layoutcode string ctrl	ctrl:nocaps
-d-i keyboard-configuration/xkb-keymap string dvorak
+#d-i keyboard-configuration/xkb-keymap string dvorak
+d-i keyboard-configuration/xkb-keymap string us
 
 ### setup opscode repo
 d-i apt-setup/local0/repository string \
@@ -37,6 +39,8 @@ d-i partman-auto/choose_recipe select atomic
 d-i partman/confirm_write_new_label boolean true
 d-i partman/choose_partition select finish
 d-i partman/confirm boolean true
+# confirm disk rewrite
+d-i partman/confirm_nooverwrite boolean true
 
 ### Boot loader installation
 d-i grub-installer/only_debian boolean true

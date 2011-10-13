@@ -1,17 +1,24 @@
-TIMEOUT 0
+TIMEOUT 50
 PROMPT 0
 
 default install
 label install
-	menu label ^Install Ubuntu as Chef Client
+	menu label ^Ubuntu <%= node[:pxe_dust][:arch] %>
 	menu default
 	kernel ubuntu-installer/<%= node[:pxe_dust][:arch] %>/linux
-	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_US console-setup/ask_detect=false debian-installer/keymap=dvorak vga=0x317 keyboard-configuration/layoutcode=dvorak console-setup/layoutcode=dvorak netcfg/get_hostname=dummy netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=Ideal_Infrastructure netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
 
-label cli
-	menu label ^Command-line install
-	kernel ubuntu-installer/<%= node[:pxe_dust][:arch] %>/linux
-	append tasks=standard pkgsel/language-pack-patterns= pkgsel/install-language-support=false vga=788 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz -- quiet 
+label installi386
+	menu label ^Ubuntu i386
+	menu default
+	kernel ubuntu-installer/i386/linux
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/i386/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=Ideal_Infrastructure netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+
+# label install
+# 	menu label ^Install Ubuntu Natty <%= node[:pxe_dust][:arch] %> as Chef Client
+# 	menu default
+# 	kernel ubuntu-installer/<%= node[:pxe_dust][:arch] %>/linux
+# 	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_US console-setup/ask_detect=false debian-installer/keymap=dvorak vga=0x317 keyboard-configuration/layoutcode=dvorak console-setup/layoutcode=dvorak netcfg/get_hostname=dummy netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
 
 label local
   localboot 0

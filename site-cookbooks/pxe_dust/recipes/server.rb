@@ -34,7 +34,18 @@ end
 
 execute "tar -xzf netboot.tar.gz -C #{node[:pxe_dust][:directory]}" do
   cwd cache_dir
-  creates "#{node[:pxe_dust][:directory]}/ubuntu-installer"
+  creates "#{node[:pxe_dust][:directory]}/ubuntu-installer/#{node[:pxe_dust][:arch]}"
+end
+
+
+remote_file "#{cache_dir}/i386-netboot.tar.gz" do
+  source "http://archive.ubuntu.com/ubuntu/dists/#{node[:pxe_dust][:version]}/main/installer-i386/current/images/netboot/netboot.tar.gz"
+  action :create_if_missing
+end
+
+execute "tar -xzf i386-netboot.tar.gz -C #{node[:pxe_dust][:directory]}" do
+  cwd cache_dir
+  creates "#{node[:pxe_dust][:directory]}/ubuntu-installer/i386"
 end
 
 
@@ -57,9 +68,9 @@ template "#{node[:pxe_dust][:directory]}/ubuntu-installer/#{node[:pxe_dust][:arc
   action :create
 end
 
+servers = [] #no searches on chef-solo
 #search for any apt-cacher proxies
 #servers = search(:node, 'recipes:apt\:\:cacher') || []
-servers = [] #no searches on chef-solo
 if servers.length > 0
   proxy = "d-i mirror/http/proxy string http://#{servers[0].ipaddress}:3142"
 else
@@ -67,8 +78,8 @@ else
 end
 # apt-cacher doesn't seem to function as an http proxy
 ### FIXME: figureing out the server's actual ip!
-#proxy = "d-i mirror/http/proxy string http://#{node[:ipaddress]}:8000" #our role includes apt::cacher
-proxy = "d-i mirror/http/proxy string http://10.42.43.1:8000" #our role includes apt::cacher
+proxy = "d-i mirror/http/proxy string http://#{node[:ipaddress]}:8000" #our server role includes deb-squid-proxy
+#proxy = "d-i mirror/http/proxy string http://10.42.43.1:8000" #our role includes apt::cacher
 #proxy = "d-i mirror/http/proxy string http://10.42.43.1:3142" #our role includes apt::cacher
 
 template "/var/www/preseed.cfg" do
@@ -83,4 +94,8 @@ end
 # just until we dynamically generate all the configs!!
 execute "ln -s /var/www/ubuntu-installer /var/www/ubuntu-installer/amd64/ubuntu-installer" do
   creates "/var/www/ubuntu-installer/amd64/ubuntu-installer"
+end
+
+execute "ln -s /var/www/ubuntu-installer /var/www/ubuntu-installer/i386/ubuntu-installer" do
+  creates "/var/www/ubuntu-installer/i386/ubuntu-installer"
 end
