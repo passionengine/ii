@@ -22,6 +22,7 @@ service 'dnsmasq'
 
 template "/etc/dnsmasq.d/dhcp-proxy.conf" do
   source "dhcp-proxy.conf.erb"
+  mode "0644"
   #notifies :restart, "service[dnsmasq]" #FIXME: if I'm running  ubuntu sharing, it can't restart due to ports
 end
 

@@ -11,9 +11,9 @@ dhcp-no-override
 #&user-class=${user-class:uristring}
 address=/ntinstall/<%= node[:ipaddress] -%>
 
-#pxe-prompt=net:#gpxe,"Automatically Installing Ubuntu", 2
-#pxe-service=net:#gpxe,X86PC, "Formatting your hard drive...", ubuntu-installer/amd64/pxelinux
+pxe-prompt=net:#gpxe,"Can I be part of thiis?", 10
+pxe-service=net:#gpxe,X86PC, "Of course!", pxelinux
 
 #### Boot to Windows Installer example
-pxe-prompt=net:#gpxe,"Automatically Installing Windows XP", 2
-pxe-service=net:#gpxe,X86PC, "Formatting your hard drive", unattended-installer/pxelinux
+#pxe-prompt=net:#gpxe,"Automatically Installing Windows XP", 2
+#pxe-service=net:#gpxe,X86PC, "Formatting your hard drive", unattended-installer/pxelinux
