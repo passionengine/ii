@@ -38,6 +38,7 @@ directory cache_dir
   execute "unzip -o #{zipfile}" do
     cwd cache_dir
     action :nothing
+    umask "022"
   end
   remote_file cache_dir + zipfile do
     source ua_mirror + zipfile
@@ -339,6 +340,26 @@ remote_file dotnet4_installer do
   checksum "65e064258f2e418816b304f646ff9e87af101e4c9552ab064bb74d281c38659f"
 end
 
+# http://www.cygwin.com/install.html
+# http://www.cygwin.com/setup.exe
+# http://www.cygwin.com/key/pubring.asc
+# http://www.cygwin.com/setup.exe.sig
+cygwin_targetdir = "#{ua_dir}install/cygwin/"
+directory cygwin_targetdir
+cygwin_exe="#{cygwin_targetdir}setup.exe"
+remote_file cygwin_exe do
+  mode "0755"
+  backup false
+  not_if { File.exists? cygwin_exe }
+  source "http://www.cygwin.com/setup.exe"
+  #checksum "a8898d37f8b0d3b534128abe4f086d7cb7c76c7918df28c015c3f47f9be69880"
+end
+
+# Z:\cygwin\setup.exe -q --local-install --root c:\cygwin -l f:\cygwin
+# within-cygwin
+# ssh-host-config --yes --cygwin "ntsec tty"
+# net start sshd
+
 # http://technet.microsoft.com/en-us/sysinternals/bb896645.aspx
 procmon_exe="#{ua_dir}install/updates/common/Procmon.exe"
 remote_file procmon_exe do
@@ -348,6 +369,9 @@ remote_file procmon_exe do
   source "http://live.sysinternals.com/Procmon.exe"
   checksum "a8898d37f8b0d3b534128abe4f086d7cb7c76c7918df28c015c3f47f9be69880"
 end
+
+
+
 
 # virtualbox-additions
 vboxadd_iso_path=node['unattended']['virtualbox']['additions_iso']
@@ -429,6 +453,16 @@ template "/var/unattended/install/scripts/vboxbase.bat" do
   mode '0644'
 end
 
+template "/var/unattended/install/scripts/iibase.bat" do
+  source "iibase.bat.erb"
+  mode '0644'
+end
+
+template "/var/unattended/install/scripts/iimiddle.bat" do
+  source "iimiddle.bat.erb"
+  mode '0644'
+end
+
 #~/.wine/drive_c/tmp/{x86|amd64}
 
 # this could be interesting.... but some of these websites don't have
@@ -445,6 +479,23 @@ end
 #   # end
 # end
 
+
+##DMI
+dmi_zip="#{cache_dir}/dmidecode-2.9.zip"
+remote_file dmi_zip do
+  source "http://wpkg.org/files/3rd_party/dmidecode-2.9.zip"
+  mode "0755"
+  backup false
+  not_if { File.exists? dmi_zip }
+  checksum "af408e584c4a882d9aa704e6c767b0f86dbab05901c086173f3475090725d2c5"
+end
+execute "unzip -o #{dmi_zip}" do
+  cwd "#{ua_dir}/install/drivers/"
+  creates "#{ua_dir}/install/drivers/dmidecode-2.9/dmidecode.exe"
+  umask "022"
+end
+
+
 Dir['/var/unattended/drivers/*.zip'].each do |driverzip|
   filename=File.basename(driverzip)
   shortname=filename.split('.')[0]
@@ -453,6 +504,7 @@ Dir['/var/unattended/drivers/*.zip'].each do |driverzip|
     code <<-EOH
     unzip #{driverzip} -d #{ua_dir}/install/drivers/#{shortname}
     EOH
+    umask "022"
     # # put anything in this dir that you want on C:\
     #directory "#{ua_dir/install/os/#{shortname}/i386/$oem$/$1/"
   end
@@ -519,6 +571,7 @@ template "#{node[:pxe_dust][:directory]}/unattended-installer/pxelinux.cfg/defau
   source "pxelinux-default.erb"
   mode '0644'
 end
+
 
 # need to be prepared better, check to see if reboot-on is enabled and do an execute-block
 # Dir[dir + '/var/unattended/install/scripts/winxpsp3-*.bat'].each do |name|

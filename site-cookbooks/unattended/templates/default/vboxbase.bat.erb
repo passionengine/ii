@@ -10,13 +10,13 @@
 :: todo.pl defrag.bat
 
 :: Update windows and turn off annoying stuff.
-todo.pl %%WINVER%%-notips.pl
+:: todo.pl %%WINVER%%-notips.pl
 
 :: Set IIS startup type to manual and ignore if not installed.
-todo.pl ".ignore-err 255 startup-type.pl Manual IISADMIN" ".ignore-err 255 startup-type.pl Manual W3SVC"
+:: todo.pl ".ignore-err 255 startup-type.pl Manual IISADMIN" ".ignore-err 255 startup-type.pl Manual W3SVC"
 
 :: Turn off Windows Messenger service
-todo.pl "startup-type.pl Disabled Messenger"
+:: todo.pl "startup-type.pl Disabled Messenger"
 
 
 :: todo.pl "msiexec /i %Z%\packages\python\python-2.7.2.msi /passive /log c:\python.log"
@@ -44,11 +44,18 @@ todo.pl "startup-type.pl Disabled Messenger"
 :: todo.pl "msiexec /i %Z%\packages\ruby\pik-0.3.0.pre.msi /passive /log c:\pikinst.log"
 :: todo.pl "%Z%\packages\ruby\rubyinstaller-1.8.7-p352.exe /verysilent"
 
+:: Get openssh installed via cygwin
+todo.pl "net start sshd"
+todo.pl "c:\cygwin\bin\bash --login /usr/bin/ssh-host-config --yes --cygwin 'ntset tty'"
+todo.pl "%Z%\cygwin\setup.exe -q --local-install --root c:\cygwin -l %Z%\cygwin"
 
+
+:: Install VBoxAdditions before anything else # /with_d3d must be in safe mode... F8 during boot #  /with_autologon if you want
+todo.pl "%Z%\drivers\VBoxWindowsAdditions-x86.exe /S"
 
 :: http://support.microsoft.com/kb/968930
 :: http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=16818
-todo.pl "%Z%\packages\ruby\WindowsXP-KB968930-x86-ENG.exe /passive /norestart /overwriteoem /nobackup /log:C:\kb968930.log"
+:::::todo.pl "%Z%\packages\ruby\WindowsXP-KB968930-x86-ENG.exe /passive /norestart /overwriteoem /nobackup /log:C:\kb968930.log"
 :: fails on status 67
 :: WindowsXP-KB968930-x86-ENG.exe /?
 :: /quiet   # no user interaction or display
@@ -63,7 +70,7 @@ todo.pl "%Z%\packages\ruby\WindowsXP-KB968930-x86-ENG.exe /passive /norestart /o
 
 :: This MUST be applied for KB968930 to be applied... as KB968930 does a registry check
 :: http://www.microsoft.com/download/en/confirmation.aspx?id=16614
-todo.pl "%Z%\packages/microsoft/NetFx20SP1_x86.exe /passive /norestart /lang:ENU"
+::::todo.pl ".ignore-err 194 %Z%\packages/microsoft/NetFx20SP1_x86.exe /passive /norestart /lang:ENU"
 :: You cannot use /norollback unless you edit the registry: http://support.microsoft.com/kb/q312499/
 :: fails on status 67
 :: NetFx20SP1_x86.exe /?
@@ -72,7 +79,7 @@ todo.pl "%Z%\packages/microsoft/NetFx20SP1_x86.exe /passive /norestart /lang:ENU
 :: /qb      # Displays minimal UI, only showing progress
 :: /passive # same as /qb
 :: /uninstall # Uninstalls product
-:: /remove # same as /uninstall
+:: /remove # same as /uninstallom
 :: /f # Repairs all .NET Framework 3.0 components that are installed.
 :: /nopatch # Specifies that patches are not applied and bypasses patch checking
 :: /norollback # Specifies that patches are not rolled back if a setup component fails.
@@ -80,7 +87,7 @@ todo.pl "%Z%\packages/microsoft/NetFx20SP1_x86.exe /passive /norestart /lang:ENU
 :: /lang:TLA # Installs the specified language pack. Language is specified as the three letter acronyms (TLA) for language (eg ENU, DEU, JPN ....) Only one language is supported. Specifying /lang:ENU skips any launguage pack installation.
 
 :: http://msdn.microsoft.com/en-us/netframework/aa731542
-todo.pl "%Z%\packages/microsoft/dotnet/install.exe /q /l"
+::::: todo.pl "%Z%\packages/microsoft/dotnet/install.exe /q /l"
 :: Z:\......dotnet\install.exe /?
 :: /l <logname.txt> : Name of the verbose msi log
 :: /lang XXXX :4-digit language code
@@ -96,5 +103,3 @@ todo.pl "%Z%\packages/microsoft/dotnet/install.exe /q /l"
 :: /q :Quiet install mode
 :: /qu :Quiet uninstall mode
 
-:: Install VBoxAdditions before anything else # /with_d3d must be in safe mode... F8 during boot #  /with_autologon if you want
-todo.pl "%Z%\drivers\VBoxWindowsAdditions-x86.exe /S"

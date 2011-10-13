@@ -19,6 +19,7 @@
 #
 
 
+default[:unattended][:virtualbox][:additions_iso] = '/usr/share/virtualbox/VBoxGuestAdditions.iso'
 default[:unattended][:iso][:torrents] = []
 # could be something like:
 #[['xphomesp2',"http://torrents.mycompany.com/xphomesp2.torrent"],
@@ -29,10 +30,53 @@ default[:unattended][:domain] = ''
 default[:unattended][:orgname] = 'PassionEngine'
 default[:unattended][:adminpass] = 'passion'
 default[:unattended][:fullname] = 'Chris McClimans'
-default[:unattended][:top_scripts] = 'base.bat'
-default[:unattended][:middle_scripts] = '7-zip.bat emacs.bat gimp.bat'
+
+#default[:unattended][:top_scripts] = 'base.bat'
+#Add vboxadd.bat here for virtualboxes
+# default[:unattended][:top_scripts] = 'vboxbase.bat'
+# vboxadds.bat
+# VBoxWindowsAdditions-x86.exe /S
+#   To extract the 32-bit drivers to "C:\Drivers", do the following:
+#  VBoxWindowsAdditions-x86 /extract /D=C:\Drivers
+#  For the 64-bit drivers:
+#  VBoxWindowsAdditions-amd64 /extract /D=C:\Drivers
+# Might be nice to just extract under wine!
+# package wine1.3
+#debconf-get-selections for msttcorefonts
+#ttf-mscorefonts-installer	msttcorefonts/accepted-mscorefonts-eula	boolean	true
+# TrueType core fonts for the Web EULA
+#ttf-mscorefonts-installer	msttcorefonts/present-mscorefonts-eula	note	
+
+
+#wine /mnt/foo/VBoxWindowsAdditions-x86.exe   /S /extract /D=C:\\tmp
+#wine /mnt/foo/VBoxWindowsAdditions-amd64.exe /S /extract /D=C:\\tmp
+# ~/.wine/drive_c/tmp/{x86|amd64}
+
+# options
+# /depth=BPP # Set the guests display color depth (bits per pixel)
+# /extract   # Only extract installation files 
+# /force     # Force installations on unknown/undetectect versions of windows versions
+# /uninstall # Just uninstalls the Guest Additions and exits
+# /with_autologon # Installs auto-logon support 
+# /with_d3d # Installed Direct 3d support (requires SAFE MODE) 
+# /xres=X # set's display width 
+# /yres=Y # set's display height
+# # params
+# /l #log
+# /S #Silent
+# /D=<path> #intall dir 
+
+#Order mandatory
+
+# Install updates and shutdown?
+# Slipstreaming via wine?
+
+
+
+
+default[:unattended][:middle_scripts] = 'iimiddle.bat 7-zip.bat'# emacs.bat gimp.bat'
 default[:unattended][:ntp_servers] = 'pool.ntp.org'
-default[:unattended][:top_scripts] = 'base.bat'
+default[:unattended][:top_scripts] = 'iibase.bat'
 default[:unattended][:media_base] = 'xpprosp3'
 default[:unattended][:xp_pro_key] = 'AAAAA-BBBBB-CCCCC-DDDDD-EEEEE'
 default[:unattended][:xp_home_key] = 'AAAAA-BBBBB-CCCCC-DDDDD-EEEEE'

@@ -1,0 +1,139 @@
+:: Turn off windows tour, we've seen enough tours
+todo.pl "reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Applets\Tour /f /v \"RunCount\" /t REG_DWORD /d 0"
+
+:: Turn off annoying notifications
+todo.pl "reg add \"HKLM\Software\Microsoft\Security Center\" /f /v \"AntiVirusDisableNotify\" /t REG_DWORD /d 1"
+todo.pl "reg add \"HKLM\Software\Microsoft\Security Center\" /f /v \"FirewallDisableNotify\" /t REG_DWORD /d 1"
+todo.pl "reg add \"HKLM\Software\Microsoft\Security Center\" /f /v \"UpdatesDisableNotify\" /t REG_DWORD /d 1"
+todo.pl "reg add \"HKLM\Software\Microsoft\Security Center\" /f /v \"FirewallOverride\" /t REG_DWORD /d 1"
+todo.pl "reg add \"HKLM\Software\Microsoft\Security Center\" /f /v \"AntiVirusOverride\" /t REG_DWORD /d 1"
+
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /f /v "DefaultUserName" /t REG_SZ /d Administrator
+reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /f /v "DefaultPassword" /t REG_SZ /d "<%= node.unattended.adminpass -%>"
+eg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /f /v "AutoAdminLogon" /t REG_SZ /d 1
+
+:: Turn off Windows Messenger service
+:: todo.pl "startup-type.pl Disabled Messenger"
+:: todo.pl "msiexec /i %Z%\packages\python\python-2.7.2.msi /passive /log c:\python.log"
+
+
+todo.pl "C:\ruby\bin\gem install chef --no-rdoc --no-ri --verbose"
+todo.pl "C:\ruby\bin\gem install ohai --no-rdoc --no-ri --verbose"
+todo.pl "C:\ruby\bin\gem install win32-open3 rdp-ruby-wmi windows-api windows-pr --no-rdoc --no-ri --verbose"
+HKEY_USERS\Default\Control Panel\Desktop\Wallpaper 
+
+mkdir C:\DevKit
+if exist "%Z%\packages\ruby\dev\*" xcopy "%Z%\packages\ruby\dev" "C:\DevKit" /S /E /Y /I
+todo.pl "C:\ruby\bin\ruby c:\DevKit\dk.rb install"
+todo.pl "C:\ruby\bin\ruby c:\DevKit\dk.rb init"
+
+:: remove 
+:: cscript /nologo C:\chef\wget.vbs /url:http://files.rubyforge.vm.bytemark.co.uk/rubyinstaller/rubyinstaller-1.8.7-p334.exe /path:%TEMP%\rubyinstaller.exe
+:: %TEMP%\rubyinstaller.exe /verysilent /dir="C:\ruby" /tasks="assocfiles,modpath"
+:: can't find ruby?
+:: todo.pl "cd C:\RubyDev; ruby dk.rb init; ruby dk.rb install"
+todo.pl "msiexec /i %Z%\packages\ruby\pik-0.3.0.pre.msi /passive /log c:\pikinst.log"
+todo.pl "%Z%\packages\ruby\rubyinstaller-1.8.7-p352.exe /verysilent /dir=C:\ruby /tasks=assocfiles,modpath"
+
+
+:: May 2006 Rob Durkin
+:: Load the default user hive, set Wallpaper value
+:: Unload Default User Hive when done
+copy %Z%\DefaultWallpaper.bmp c:\windows\DefaultWallpaper.bmp
+reg.exe load HKU\DefUser "C:\Documents and Settings\Default User\ntuser.dat"
+reg.exe add "HKU\DefUser\Control Panel\Desktop" /v Wallpaper /d "c:\windows\DefaultWallpaper.bmp" /f
+reg.exe unload HKU\DefUser
+
+:: Get openssh installed via cygwin
+echo Scheduling install of Cygwin and OpenSSH
+todo.pl "netsh firewall set opmode disable" 
+todo.pl "netsh firewall add portopening TCP 22 SSH enable subnet"
+todo.pl "netsh firewall add portopening TCP 80 HTTP enable subnet"
+todo.pl "c:\cygwin\bin\bash --login /usr/bin/ssh-host-config --yes --cygwin 'ntset tty'"
+:: todo.pl "net stop sshd"
+todo.pl "%Z%\cygwin\setup.exe -q --local-install --root c:\cygwin -l %Z%\cygwin"
+
+
+echo Attempting to Detect VirtualBox
+
+:vboxdetect
+%Z%\drivers\dmidecode-2.9\dmidecode.exe | find /I "Product" | find /I "VirtualBox"
+if not errorlevel 0 goto notvbox
+
+:isvbox
+echo VirtualBox Detected: Scheduling Guest Tools Installation
+:: Install VBoxAdditions before anything else # /with_d3d must be in safe mode... F8 during boot #  /with_autologon if you want
+todo.pl "%Z%\drivers\VBoxWindowsAdditions-x86.exe /S"
+goto vboxend
+
+:notvbox
+echo This is a not a VirtualBox!
+:: Install VirtualBox
+:: http://www.virtualbox.org/manual/ch02.html#idp8996224 or run it with /?
+:: -extract # Extract file contents to a temporary directory
+:: -silent  # Enables silent mode installation
+:: -path    # Sets the path of the extraction directory
+:: -msiparams # Specificies extra parameters for the MSI installers
+:: -logging # Enables installer logging
+:: -version # Print version number and exit
+:: ex: VBox.exe -msiparams INSTALLDIR=C:\VBox
+:: ex: VBox.exe -extract -path C:\VBox
+:: really should check to make sure "C:\Documents and Settings\All Users\Desktop\Oracle VM Virtualbox.link" exists
+:: As virtualbox exits immediately
+::todo.pl "msiexec /i %Z%\packages\virtualbox\VirtualBox-4.1.2-r73507-MultiArch_x86.msi /passive /log c:\vboxinst.log"
+
+:vboxend
+
+::: Early in the project we tried to start with winrm.. which required .net and KB968930
+::: I had trouble with winrm service starting on XP without at domain
+::: Need to look at this later
+
+:: http://support.microsoft.com/kb/968930
+:: http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=16818
+todo.pl ".ignore-err 194 %Z%\packages\ruby\WindowsXP-KB968930-x86-ENG.exe /passive /norestart /overwriteoem /nobackup /log:C:\kb968930.log"
+:: fails on status 67
+:: WindowsXP-KB968930-x86-ENG.exe /?
+:: /quiet   # no user interaction or display
+:: /passive # unattended mode (progress bar only)
+:: /norestart | /forcerestart | /warnrestart[:seconds]
+:: /promptrestart
+:: /overwriteoem # Overwrite oem files without prompting
+:: /nobackup     # Do not backup files needed for uninstall
+:: /forceappclose # Force other programs to close when the computer shuts down
+:: /integrate:<fullpath> # Integrate this software update into <fullpath>
+:: /log:<fullpath> # Create log file at <fullpath>
+
+:: This MUST be applied for KB968930 to be applied... as KB968930 does a registry check
+:: http://www.microsoft.com/download/en/confirmation.aspx?id=16614
+todo.pl ".ignore-err 194 %Z%\packages/microsoft/NetFx20SP1_x86.exe /passive /norestart /lang:ENU"
+:: You cannot use /norollback unless you edit the registry: http://support.microsoft.com/kb/q312499/
+:: fails on status 67
+:: NetFx20SP1_x86.exe /?
+:: /q       # Suppress all UI. An .INI cannot be specified with this option.
+:: /quiet   # same as /q
+:: /qb      # Displays minimal UI, only showing progress
+:: /passive # same as /qb
+:: /uninstall # Uninstalls product
+:: /remove # same as /uninstallom
+:: /f # Repairs all .NET Framework 3.0 components that are installed.
+:: /nopatch # Specifies that patches are not applied and bypasses patch checking
+:: /norollback # Specifies that patches are not rolled back if a setup component fails.
+:: /norestart # Specifies that the instnaller does not restart the computer after installation completes. The Redistributable installer returns ERROR_SUCCESS_REBOOT_REQUIRED (3010) if a reboot is required.
+:: /lang:TLA # Installs the specified language pack. Language is specified as the three letter acronyms (TLA) for language (eg ENU, DEU, JPN ....) Only one language is supported. Specifying /lang:ENU skips any launguage pack installation.
+
+:: http://msdn.microsoft.com/en-us/netframework/aa731542
+::::: todo.pl "%Z%\packages/microsoft/dotnet/install.exe /q /l"
+:: Z:\......dotnet\install.exe /?
+:: /l <logname.txt> : Name of the verbose msi log
+:: /lang XXXX :4-digit language code
+:: /q :Quiet install mode
+:: /qu :Quiet uninstall mode
+
+
+:: http://www.microsoft.com/download/en/confirmation.aspx?id=17718
+todo.pl "%Z%\updates\common\dotNetFx40_Full_x86_x64.exe /log %temp%\dotnet4.htm /passive /showfinalerror /norestart"
+:: Z:\......dotnet\install.exe /?
+:: /l <logname.txt> : Name of the verbose msi log
+:: /lang XXXX :4-digit language code
+:: /q :Quiet install mode
+:: /qu :Quiet uninstall mode

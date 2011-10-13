@@ -1,0 +1,19 @@
+:: MASTER: Perform a basic workstation installation
+@Echo off
+title :ii :base :windowsxp
+
+:: Set Automatic Updates to download and update automatically (SP2 behavior)
+:: I want to disable updates completely and apply them with chef
+:: todo.pl "auconfig.pl --day 0 --time 3 --wait 10 4"
+
+:: Defragment the drive to collect the free space.
+:: Turning off for time... maybe turn on later
+:: todo.pl defrag.bat
+
+:: Update windows and turn off annoying stuff.
+:: todo.pl %%WINVER%%-notips.pl
+
+:: Set IIS startup type to manual and ignore if not installed.
+:: todo.pl ".ignore-err 255 startup-type.pl Manual IISADMIN" ".ignore-err 255 startup-type.pl Manual W3SVC"
+
+
