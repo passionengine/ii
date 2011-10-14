@@ -35,6 +35,9 @@ Create a Vagrant basebox based on ubuntu-10.04 from the iso and install chef/pup
 
 ```
 vagrant basebox build vvii
+vagrant basebox validate vvii
+vagrant basebox export vvii
+vagrant box add vvii vvii.box
 ```
 
 Once you have the basebox defined and imported into your ~/.vagrant.d/boxes directory,
