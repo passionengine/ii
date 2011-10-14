@@ -68,9 +68,13 @@ template "#{node[:pxe_dust][:directory]}/ubuntu-installer/#{node[:pxe_dust][:arc
   action :create
 end
 
-servers = [] #no searches on chef-solo
-#search for any apt-cacher proxies
-#servers = search(:node, 'recipes:apt\:\:cacher') || []
+if Chef::Config[:solo]
+  servers = [] #no searches on chef-solo
+else
+  #search for any apt-cacher proxies
+  servers = search(:node, 'recipes:apt\:\:cacher') || []
+end
+
 if servers.length > 0
   proxy = "d-i mirror/http/proxy string http://#{servers[0].ipaddress}:3142"
 else

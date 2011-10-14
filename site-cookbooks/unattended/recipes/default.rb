@@ -631,8 +631,12 @@ template "/var/unattended/install/site/config.pl" do
   mode '0644'
 end
 
-#vboxes = search("virtualboxen", "*:*")
-vboxes = [] # no searches in chef-solo
+if Chef::Config[:solo]
+  vboxes = [] # no searches in chef-solo
+else 
+  vboxes = search("virtualboxen", "*:*")
+end
+
 template "/var/unattended/install/site/unattend.csv" do
   source "unattend.csv.erb"
   mode '0644'
