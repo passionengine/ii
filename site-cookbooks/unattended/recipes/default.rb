@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-require 'bencode' # for .bdecode on torrent
+#require 'bencode' # for .bdecode on torrent
 require 'chef/file_cache'
 include_recipe 'dnsmasq'
 
@@ -31,21 +31,24 @@ cache_dir = "#{Chef::Config[:file_cache_path]}/unattended/"
 
 directory cache_dir
 
-[[ua_zip, 'e9b8e7a73ff3f95601f6ed30b92257b8a8da4692289f75be2ee5e3d7b23f18c4'],
+# chef if exists first?
+[[ua_zip, 'e9b8e7a73ff3f95601f6ed30b92257b8a8da4692289f75be2ee5e3d7b23f18c4', 'unattended-4.9/README.txt'],
 # [ua_dos_zip, 'a473d4b070b2655ccbcaaba85b27930647fa24c0267f7c07d420a2d5f60bb15c'],
- [ua_lin_zip, '48606a60f1f08adda69d688f9a2133e1c5d1708e94a521f7bc87809086c359d8']
-].each do |zipfile, sha256sum|
-  execute "unzip -o #{zipfile}" do
-    cwd cache_dir
-    action :nothing
-    umask "022"
-  end
+ [ua_lin_zip, '48606a60f1f08adda69d688f9a2133e1c5d1708e94a521f7bc87809086c359d8', 'unattended-4.9/linuxboot/tftpboot/pxelinux.0']
+].each do |zipfile, sha256sum, content|
   remote_file cache_dir + zipfile do
     source ua_mirror + zipfile
     checksum sha256sum
-    notifies :run, "execute[unzip -o #{zipfile}]", :immediately
+    not_if { File.exists? cache_dir + zipfile }
+    #notifies :run, "execute[unzip -o #{zipfile}]", :immediately
+  end
+  execute "unzip -o #{zipfile}" do
+    cwd cache_dir
+    umask "022"
+    creates "#{cache_dir}/#{content}"
   end
 end
+
 
 [["linuxboot/tftpboot", "unattended-installer"]
 # ["bootdisk/tftpboot",  "unattended-dos"]
@@ -83,18 +86,22 @@ end
 
 
 include_recipe 'transmission'
+directory "#{cache_dir}/iso"
 directory "#{ua_dir}/iso"
 
 tuser=node['transmission']['rpc_username']
 tpass=node['transmission']['rpc_password']
 
 node['unattended']['iso']['torrents'].each do |shortname,torrenturl|
-  tf=transmission_torrent_file "#{ua_dir}/iso/#{shortname}.iso"  do
+  # fix this to only download torrent if we don't already have the ISO
+  # maybe just an 'unless ?'
+  tf=transmission_torrent_file "#{cache_dir}/iso/#{shortname}.iso"  do
     torrent torrenturl
     continue_seeding true
     rpc_username tuser
     rpc_password tpass
     action :create
+    not_if { File.exists? "#{cache_dir}/iso/#{shortname}.iso" }
   end
   # this only excutes if we have a torrent_file (probably in cache)
   # but the resultant file doesn't exist
@@ -107,11 +114,11 @@ node['unattended']['iso']['torrents'].each do |shortname,torrenturl|
   # end
 end
 
-# mount all iso's dumped into /var/unattended/iso and copy contents
+# mount all iso's dumped into #{cache_dir}/iso and copy contents
 # to /var/unattended/install/os/ISONAME
 # I think they need to be only 8 characters long
 
-Dir['/var/unattended/iso/*.iso'].each do |isofile|
+Dir['#{cache_dir}/iso/*.iso'].each do |isofile|
   filename=File.basename(isofile)
   shortname=filename.split('.')[0]
   bash "copy contents of #{filename} to #{ua_dir}/install/os/" do
@@ -123,7 +130,7 @@ Dir['/var/unattended/iso/*.iso'].each do |isofile|
       umount #{cache_dir}#{shortname}
     EOH
     # # put anything in this dir that you want on C:\
-    #directory "#{ua_dir/install/os/#{shortname}/i386/$oem$/$1/"
+    #directory "#{ua_dir}/install/os/#{shortname}/i386/$oem$/$1/"
   end
 end
 
@@ -140,8 +147,9 @@ node['unattended']['driverpack']['torrents'].each do |dpt|
   t_sha256 = dpt[:sha256]
   driver_file = dpt[:content_filename]
   
-  local_torrent_file = "#{cache_dir}torrents/#{t_file}"
-  local_driver_file = "#{cache_dir}drivers/#{driver_file}"
+  local_torrent_file = "#{cache_dir}torrents/#{t_file}" #.torrent
+  torrent_download = "#{cache_dir}torrents/#{driver_file}" #symlink to transmission
+  local_driver_file = "#{cache_dir}drivers/#{driver_file}" #local cached copy
 
   remote_file "#{t_file} from #{t_url}" do
     path local_torrent_file
@@ -152,18 +160,24 @@ node['unattended']['driverpack']['torrents'].each do |dpt|
     not_if { File.exists? local_torrent_file }
   end
 
-  transmission_torrent_file local_driver_file  do
+  transmission_torrent_file torrent_download  do
     torrent local_torrent_file
     continue_seeding true
     rpc_username tuser
     rpc_password tpass
     action :create
+    not_if { File.exists? "#{local_driver_file}" }
   end
   
+  execute "cp -a #{torrent_download} #{local_driver_file}" do
+    creates "#{local_driver_file}"
+  end
   # I don't know the contents of these 7zip files, but I can track if I've decompressed them
-  execute "7zr x -y #{local_driver_file} && touch #{local_driver_file}.decompressed" do
+  # the .demcompressed file being in the shared cache isn't going to work..
+  # must use something in target ua_dir
+  execute "7zr x -y #{local_driver_file} && touch #{ua_dir}/install/drivers/#{driver_file}.decompressed" do
     cwd     "#{ua_dir}/install/drivers"
-    creates "#{local_driver_file}.decompressed" 
+    creates "#{ua_dir}/install/drivers/#{driver_file}.decompressed"
   end
 end
 
@@ -178,24 +192,33 @@ end
 
 #http://msysgit.googlecode.com/files/Git-1.7.6-preview20110708.exe
 
-directory "#{ua_dir}install/packages/ruby"
-ruby_installer="#{ua_dir}install/packages/ruby/rubyinstaller-1.8.7-p352.exe"
-remote_file ruby_installer do
+ruby_installer_cache="#{cache_dir}/rubyinstaller-1.8.7-p352.exe"
+remote_file ruby_installer_cache do
   source "http://rubyforge.org/frs/download.php/75107/rubyinstaller-1.8.7-p352.exe"
   checksum "4720388633ff4f0661032db7b7c00fbc701d2be733e273600431d1cb02c85700"
   backup false
   mode "0755"
-  not_if { File.exists? ruby_installer }
+  not_if { File.exists? ruby_installer_cache }
+end
+directory "#{ua_dir}install/packages/ruby"
+ruby_installer="#{ua_dir}install/packages/ruby/rubyinstaller-1.8.7-p352.exe"
+execute "cp -a #{ruby_installer_cache} #{ruby_installer}" do
+  creates "#{ruby_installer}"
 end
 
-rubydev_installer="#{ua_dir}install/packages/ruby/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
-remote_file rubydev_installer do
+rubydev_installer_cache="#{cache_dir}/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
+remote_file rubydev_installer_cache do
   source "http://github.com/downloads/oneclick/rubyinstaller/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
   checksum "6230d9e552e69823b83d6f81a5dadc06958d7a17e10c3f8e525fcc61b300b2ef"
   backup false
   mode "0755"
-  not_if { File.exists? rubydev_installer }
+  not_if { File.exists? rubydev_installer_cache }
 end
+rubydev_installer="#{ua_dir}install/packages/ruby/DevKit-tdm-32-4.5.2-20110712-1620-sfx.exe"
+execute "cp -a #{rubydev_installer_cache} #{rubydev_installer}" do
+  creates "#{rubydev_installer}"
+end
+
 
 devdir = "#{ua_dir}/install/packages/ruby/dev"
 directory devdir
@@ -209,68 +232,92 @@ end
 
 
 
-wmf_installer="#{ua_dir}install/packages/ruby/WindowsXP-KB968930-x86-ENG.exe"
-remote_file wmf_installer do
+wmf_installer_cache="#{cache_dir}WindowsXP-KB968930-x86-ENG.exe"
+remote_file wmf_installer_cache do
   source "http://download.microsoft.com/download/E/C/E/ECE99583-2003-455D-B681-68DB610B44A4/WindowsXP-KB968930-x86-ENG.exe"
   checksum "0ef2a9b4f500b66f418660e54e18f5f525ed8d0a4d7c50ce01c5d1d39767c00c"
   backup false
   mode "0755"
-  not_if { File.exists? wmf_installer }
+  not_if { File.exists? wmf_installer_cache }
+end
+wmf_installer="#{ua_dir}install/packages/ruby/WindowsXP-KB968930-x86-ENG.exe"
+execute "cp -a #{wmf_installer_cache} #{wmf_installer}" do
+  creates "#{wmf_installer}"
 end
 
 
 
 directory "#{ua_dir}install/packages/virtualbox"
-virtualbox_installer="#{ua_dir}install/packages/virtualbox/VirtualBox-4.1.2-73507-Win.exe"
-remote_file virtualbox_installer do
+virtualbox_installer_cache="#{cache_dir}/VirtualBox-4.1.2-73507-Win.exe"
+remote_file virtualbox_installer_cache do
   source "http://download.virtualbox.org/virtualbox/4.1.2/VirtualBox-4.1.2-73507-Win.exe"
   checksum "dc0987219692f2d9fee90ab06ce2d2413fb620e5a00733628935be974d42c11d"
   backup false
   mode "0755"
-  not_if { File.exists? virtualbox_installer }
+  not_if { File.exists? virtualbox_installer_cache }
+end
+virtualbox_installer="#{ua_dir}install/packages/virtualbox/VirtualBox-4.1.2-73507-Win.exe"
+execute "cp -a #{virtualbox_installer_cache} #{virtualbox_installer}" do
+  creates "#{virtualbox_installer}"
 end
 
-virtualbox_extpack="#{ua_dir}install/packages/virtualbox/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
-remote_file virtualbox_extpack do
+virtualbox_extpack_cache="#{cache_dir}/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
+remote_file virtualbox_extpack_cache do
   source "http://download.virtualbox.org/virtualbox/4.1.2/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
   checksum "3bc5ad8d7082b6debeec24c40a86629bf0ad6313343532d0ad0fee4131e8f9fc"
   backup false
   mode "0755"
-  not_if { File.exists? virtualbox_extpack }
+  not_if { File.exists? virtualbox_extpack_cache }
+end
+virtualbox_extpack="#{ua_dir}install/packages/virtualbox/Oracle_VM_VirtualBox_Extension_Pack-4.1.2-73507.vbox-extpack"
+execute "cp -a #{virtualbox_extpack_cache} #{virtualbox_extpack}" do
+  creates "#{virtualbox_extpack}"
 end
 
-
 directory "#{ua_dir}install/packages/python"
-python_installer="#{ua_dir}install/packages/python/python-2.7.2.msi"
-remote_file python_installer do
+python_installer_cache="#{cache_dir}/python-2.7.2.msi"
+remote_file python_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? python_installer }
+  not_if { File.exists? python_installer_cache }
   source "http://www.python.org/ftp/python/2.7.2/python-2.7.2.msi"
   checksum "b99c20bece1fe4ac05844aea586f268e247107cd0f8b29593172764c178a6ebe"
 end
+python_installer="#{ua_dir}install/packages/python/python-2.7.2.msi"
+execute "cp -a #{python_installer_cache} #{python_installer}" do
+  creates "#{python_installer}"
+end
 
-pik_installer="#{ua_dir}install/packages/ruby/pik-0.3.0.pre.msi"
-remote_file pik_installer do
+pik_installer_cache="#{cache_dir}/pik-0.3.0.pre.msi"
+remote_file pik_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? pik_installer }
+  not_if { File.exists? pik_installer_cache }
   source "https://github.com/downloads/vertiginous/pik/pik-0.3.0.pre.msi"
   checksum "16d7c0c5bfa30f36ded41e8cfb7691024273aca5a77654257a44ba3e29d4534a"
+end
+pik_installer="#{ua_dir}install/packages/ruby/pik-0.3.0.pre.msi"
+execute "cp -a #{pik_installer_cache} #{pik_installer}" do
+  creates "#{pik_installer}"
 end
 
 
 directory "#{ua_dir}install/packages/microsoft"
-dotnetsp1_installer="#{ua_dir}install/packages/microsoft/NetFx20SP1_x86.exe"
-remote_file dotnetsp1_installer do
+dotnetsp1_installer_cache="#{cache_dir}/NetFx20SP1_x86.exe"
+remote_file dotnetsp1_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? dotnetsp1_installer }
+  not_if { File.exists? dotnetsp1_installer_cache }
   source "http://download.microsoft.com/download/0/8/c/08c19fa4-4c4f-4ffb-9d6c-150906578c9e/NetFx20SP1_x86.exe"
   checksum "c36c3a1d074de32d53f371c665243196a7608652a2fc6be9520312d5ce560871"
 end
+dotnetsp1_installer="#{ua_dir}install/packages/microsoft/NetFx20SP1_x86.exe"
+execute "cp -a #{dotnetsp1_installer_cache} #{dotnetsp1_installer}" do
+  creates "#{dotnetsp1_installer}"
+end
 
 dotnet_installer="#{ua_dir}install/packages/microsoft/dotnetfx.exe"
+dotnet_installer_cache="#{cache_dir}/dotnetfx.exe"
 # :: dotnetfx.exe /?
 # :: /Q -- Quiet modes for packgage.
 # :: /T:<full path> -- Specifies temporary working folder,
@@ -278,15 +325,19 @@ dotnet_installer="#{ua_dir}install/packages/microsoft/dotnetfx.exe"
 # :: /C:<cmd> -- Override Install Command defined by author
 
 # todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
-remote_file dotnet_installer do
+remote_file dotnet_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? dotnet_installer }
+  not_if { File.exists? dotnet_installer_cache }
   source "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe"
   checksum "46693d9b74d12454d117cc61ff2e9481cabb100b4d74eb5367d3cf88b89a0e71"
 end
+execute "cp -a #{dotnet_installer_cache} #{dotnet_installer}" do
+  creates "#{dotnet_installer}"
+end
 
 dotnet35_installer="#{ua_dir}install/updates/common/dotnetfx35-sp1.exe"
+dotnet35_installer_cache="#{cache_dir}/dotnetfx35-sp1.exe"
 
 # :: dotnetfx.exe /?
 # :: /Q -- Quiet modes for packgage.
@@ -295,15 +346,19 @@ dotnet35_installer="#{ua_dir}install/updates/common/dotnetfx35-sp1.exe"
 # :: /C:<cmd> -- Override Install Command defined by author
 
 # todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
-remote_file dotnet35_installer do
+remote_file dotnet35_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? dotnet35_installer }
+  not_if { File.exists? dotnet35_installer_cache }
   source "http://download.microsoft.com/download/2/0/e/20e90413-712f-438c-988e-fdaa79a8ac3d/dotnetfx35.exe"
   #checksum "46693d9b74d12454d117cc61ff2e9481cabb100b4d74eb5367d3cf88b89a0e71"
 end
+execute "cp -a #{dotnet35_installer_cache} #{dotnet35_installer}" do
+  creates "#{dotnet35_installer}"
+end
 
 dotnet4_installer="#{ua_dir}install/updates/common/dotNetFx40_Full_x86_x64.exe"
+dotnet4_installer_cache="#{cache_dir}/dotNetFx40_Full_x86_x64.exe"
 # dotNetFx40_Full_x86_x64.exe /?
 # /CIEPconsent - Optionally send anonymous feedback to improve the customer experience
 # /chainingpackage <name> - Optionally record the name of a package chaining this one
@@ -332,12 +387,15 @@ dotnet4_installer="#{ua_dir}install/updates/common/dotNetFx40_Full_x86_x64.exe"
 # Some command line switches are disabled for this package: createlayout
 
 # todo.pl ".ignore-err 3010 %Z%\packages/microsoft/dotnet.exe /C /T:C:\dotnet"
-remote_file dotnet4_installer do
+remote_file dotnet4_installer_cache do
   mode "0755"
   backup false
-  not_if { File.exists? dotnet4_installer }
+  not_if { File.exists? dotnet4_installer_cache }
   source "http://download.microsoft.com/download/9/5/A/95A9616B-7A37-4AF6-BC36-D6EA96C8DAAE/dotNetFx40_Full_x86_x64.exe"
   checksum "65e064258f2e418816b304f646ff9e87af101e4c9552ab064bb74d281c38659f"
+end
+execute "cp -a #{dotnet4_installer_cache} #{dotnet4_installer}" do
+  creates "#{dotnet4_installer}"
 end
 
 # http://www.cygwin.com/install.html
@@ -347,12 +405,16 @@ end
 cygwin_targetdir = "#{ua_dir}install/cygwin/"
 directory cygwin_targetdir
 cygwin_exe="#{cygwin_targetdir}setup.exe"
-remote_file cygwin_exe do
+cygwin_exe_cache="#{cache_dir}/cygwin_setup.exe"
+remote_file cygwin_exe_cache do
   mode "0755"
   backup false
-  not_if { File.exists? cygwin_exe }
+  not_if { File.exists? cygwin_exe_cache }
   source "http://www.cygwin.com/setup.exe"
   #checksum "a8898d37f8b0d3b534128abe4f086d7cb7c76c7918df28c015c3f47f9be69880"
+end
+execute "cp -a #{cygwin_exe_cache} #{cygwin_exe}" do
+  creates "#{cygwin_exe}"
 end
 
 # Z:\cygwin\setup.exe -q --local-install --root c:\cygwin -l f:\cygwin
@@ -362,17 +424,21 @@ end
 
 # http://technet.microsoft.com/en-us/sysinternals/bb896645.aspx
 procmon_exe="#{ua_dir}install/updates/common/Procmon.exe"
-remote_file procmon_exe do
+procmon_exe_cache="#{ua_dir}install/updates/common/Procmon.exe"
+remote_file procmon_exe_cache do
   mode "0755"
   backup false
-  not_if { File.exists? procmon_exe }
+  not_if { File.exists? procmon_exe_cache }
   source "http://live.sysinternals.com/Procmon.exe"
   checksum "a8898d37f8b0d3b534128abe4f086d7cb7c76c7918df28c015c3f47f9be69880"
+end
+execute "cp -a #{procmon_exe_cache} #{procmon_exe}" do
+  creates "#{procmon_exe}"
 end
 
 
 
-
+# Better to pull these down from the web I think FIXME!
 # virtualbox-additions
 vboxadd_iso_path=node['unattended']['virtualbox']['additions_iso']
 package 'virtualbox-guest-additions' do 
@@ -394,7 +460,12 @@ bash "copy contents of #{vboxadd_iso_path} to #{local_driver_dir}" do
 end
 
 
-package 'wine1.3' do
+
+# Will wine need X?
+# Wine does lots of downloading as it is installed... fonts etc
+# would be interesting to see how to cache it completely for no network access
+#package 'wine1.3' do # as wine1.3 isn't available on 10.04 etc
+package 'wine' do
   response_file 'wine.seed' #windows font eula... maybe we should alert user
 end
 
@@ -496,6 +567,8 @@ execute "unzip -o #{dmi_zip}" do
 end
 
 
+
+# This is where XP Drivers from Dell and Big vendors might be useful...
 Dir['/var/unattended/drivers/*.zip'].each do |driverzip|
   filename=File.basename(driverzip)
   shortname=filename.split('.')[0]
@@ -558,7 +631,8 @@ template "/var/unattended/install/site/config.pl" do
   mode '0644'
 end
 
-vboxes = search("virtualboxen", "*:*")
+#vboxes = search("virtualboxen", "*:*")
+vboxes = [] # no searches in chef-solo
 template "/var/unattended/install/site/unattend.csv" do
   source "unattend.csv.erb"
   mode '0644'
