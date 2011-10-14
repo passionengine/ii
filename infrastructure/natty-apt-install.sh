@@ -48,6 +48,7 @@ chef chef/chef_server_url string http://`hostname`:4000
 chef-solr chef-solr/amqp_password password `pwgen -1 32`
 # New password for the 'admin' user in the Chef Server WebUI:
 chef-server-webui chef-server-webui/admin_password password `pwgen -1 -A 6`
+rabbitmq-server rabbitmq-server/upgrade_previous note
 EOF
 
 apt-get -y install opscode-keyring # permanent upgradeable keyring
