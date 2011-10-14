@@ -26,10 +26,13 @@ template "/etc/dnsmasq.d/dhcp-proxy.conf" do
   #notifies :restart, "service[dnsmasq]" #FIXME: if I'm running  ubuntu sharing, it can't restart due to ports
 end
 
+# I'm in favor of using some type of new thing called...
+# remote_file_from_cache
 remote_file "/var/www/ipxe.pxe" do
   source "http://boot.ipxe.org/ipxe.pxe"
   checksum '9c5aa99005711f8c9ad2e00ecb8e98ecc1400d6317821beb8359dabc3f179766'
   mode '0644'
+  not_if { File.exists? "/var/www/ipxe.exe" }
 end
 
 execute "ln -s /var/www/ipxe.pxe /var/www/ipxe.pxe.0" do
