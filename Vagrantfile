@@ -1,6 +1,6 @@
 Vagrant::Config.run do |config|
   config.vm.define :chef do |chef_config|
-    chef_config.vm.box = "vv17"
+    chef_config.vm.box = "vv18"
     # chef_config.vm.box_url = "http://domain.com/path/to/above.box"
     chef_config.vm.boot_mode = :gui
     chef_config.vm.forward_port "http", 80, 9080
@@ -12,13 +12,14 @@ Vagrant::Config.run do |config|
       #vm.memory_size = 512
       vm.vram_size = 12
     end
-    chef_config.vm.share_folder "v-chef-cache", "/chefcache", "cache" # mounts last
+    #chef_config.vm.share_folder "v-chef-cache", "/chefcache", "cache" # mounts last
     chef_config.vm.provision :chef_solo do |chef|
-      #chef.data_bags_path = "data_bags" # mounts first, before anything else
-      chef.provisioning_path = "/vagrant" # by default where the cache is... I want it shared, mounts second
-      chef.cookbooks_path = "cookbooks", "site-cookbooks" # mounts third and fourth
+      #chef.nfs = true # seems to break things
+      chef.data_bags_path = "data_bags" 
+      chef.provisioning_path = "/vagrant/cache"
+      chef.cookbooks_path = "cookbooks", "site-cookbooks"
       chef.add_recipe "pxe_dust::server"
-      chef.add_recipie "pxe_knife"
+      chef.add_recipe "pxe_knife"
       chef.add_recipe "dnsmasq"
       chef.add_recipe "chef-bootstrap::apache-proxy"
       #chef.add_recipe "pxe_dust::ubuntu-studio"
