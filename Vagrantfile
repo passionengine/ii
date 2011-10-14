@@ -1,6 +1,6 @@
 Vagrant::Config.run do |config|
   config.vm.define :chef do |chef_config|
-    chef_config.vm.box = "vv18"
+    chef_config.vm.box = "vvii"
     # chef_config.vm.box_url = "http://domain.com/path/to/above.box"
     chef_config.vm.boot_mode = :gui
     chef_config.vm.forward_port "http", 80, 9080
