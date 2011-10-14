@@ -17,8 +17,8 @@
 # limitations under the License.
 #
 
-users = nil
-shares = data_bag_item("samba", "shares")
+users = [data_bag_item("users", "guest")]
+shares = data_bag_item("samba", "shares") # broken under Vagrant + chef-solo for now FIXME
 
 shares["shares"].each do |k,v|
   if v.has_key?("path")
@@ -28,9 +28,10 @@ shares["shares"].each do |k,v|
   end
 end
 
-unless node["samba"]["passdb_backend"] =~ /^ldapsam/
-  users = search("users", "*:*")
-end
+# search doesn't work on chef-solo
+# unless node["samba"]["passdb_backend"] =~ /^ldapsam/
+#   users = search("users", "*:*")
+# end
 
 package value_for_platform(
   ["ubuntu", "debian", "arch"] => { "default" => "samba" },
@@ -60,6 +61,7 @@ template node["samba"]["config"] do
   variables :shares => shares["shares"]
   notifies :restart, resources(:service => svcs)
 end
+
 
 if users
   users.each do |u|
