@@ -14,6 +14,7 @@ directory "#{pxe_root}/pxelinux.cfg" do
   mode "0777" # FIXME: Security hole put here for test, remove me...TEST FIX
 end
 
+# FIXME: these are currently in my pxe_knife/file/default/ dir should probably come from remote_file
 for pxe_file in %w{ help-rhel.txt help.txt memdisk menu.c32 pxelinux.0 vesamenu.c32 pxebootsplash-linuxbox.jpg pxebootsplash-help.jpg}
   cookbook_file "#{pxe_root}/#{pxe_file}" do
     source pxe_file
@@ -21,6 +22,7 @@ for pxe_file in %w{ help-rhel.txt help.txt memdisk menu.c32 pxelinux.0 vesamenu.
   end
 end
 
+# FIXME: these are currently in my pxe_knife/file/default/pxelinux.cfg dir should probably come from remote_file
 for pxe_cfg in %w{ centos.menu graphics.conf imaging.menu mandriva.menu rhel.menu }
   cookbook_file "#{pxe_root}/pxelinux.cfg/#{pxe_cfg}" do
     source "pxelinux.cfg/#{pxe_cfg}"
