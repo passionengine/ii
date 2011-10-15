@@ -47,6 +47,42 @@ it is available for referencing from the Vagrantfile.
 vagrant up
 ```
 
+The above fails even thought I specifically install the multi_json gem in the [vagrant.sh postinstall](https://github.com/passionengine/ii/blob/master/definitions/vvii/vagrant.sh#L15).
+
+```
+FATAL: Gem::InstallError: gem_package[transmission-simple] (transmission::default line 31) had an error: multi_json requires RubyGems version >= 1.3.6
+```
+
+So just ssh into the newly broken box by running 'vagrant ssh'
+
+```
+vagrant ssh
+Linux vvii 2.6.32-33-generic #72-Ubuntu SMP Fri Jul 29 21:08:37 UTC 2011 i686 GNU/Linux
+Ubuntu 10.04.3 LTS
+
+Welcome to Ubuntu!
+ * Documentation:  https://help.ubuntu.com/
+Last login: Sat Oct 15 02:29:29 2011 from 10.0.2.2
+vagrant@vvii:~$ 
+vagrant@vvii:~$ logout
+Connection to 127.0.0.1 closed.
+chris@breeze:~/boot/chef-repo$ vagrant ssh 
+Linux vvii 2.6.32-33-generic #72-Ubuntu SMP Fri Jul 29 21:08:37 UTC 2011 i686 GNU/Linux
+Ubuntu 10.04.3 LTS
+
+Welcome to Ubuntu!
+ * Documentation:  https://help.ubuntu.com/
+Last login: Sat Oct 15 02:29:57 2011 from 10.0.2.2
+vagrant@vvii:~$
+```
+
+And continue the chef-solo provisioning....
+
+```
+sudo su -
+chef-solo -c /vagrant/cache/solo.rb -j /vagrant/cache/dna.json -l debug
+```
+
 This provisions the new vvii box with chef-solo.
 
 Basically populates ./cache within your host OS
@@ -58,14 +94,3 @@ to download all the big stuff once. Currently it's around 2.3 gig.
 The results is a a chef-server, with the ability to provision linux and windows xp
 via dhcp+tftp (pxe) that will eventually work against new Virtualboxes...
 AND real hardware boxes.
-
-Right now I'm limited because I haven't figured out how to create a Vagrant-basebox via veewee
-that supports multiple nics:
-
-```cucumber
-Given a Vagrantfile pointing to a basebox with multiple network interfaces
-When I need internet/network access (nat)
-And I need NFS for fast access to shared cache (host-only)
-And I need to boot real machines from a DHCP/TFTP service (bridge)
-Then I should be able to configure the three network interfaces appropriately
-```
