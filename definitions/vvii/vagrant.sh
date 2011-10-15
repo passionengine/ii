@@ -7,9 +7,10 @@ apt-get -y upgrade
 apt-get -y install linux-headers-$(uname -r) chef-server-webui puppet
 apt-get clean
 
-# update rubygems to 1.8.11
+# update rubygems to 1.3.7
 gem install rubygems-update
 /var/lib/gems/1.8/bin/update_rubygems
+gem update --system 1.3.7
 # FATAL: Gem::InstallError: gem_package[transmission-simple] (transmission::default line 31)
 # had an error: multi_json requires RubyGems version >= 1.3.6
 gem install multi_json # fail when done in chef-solo, but not here FIXME
