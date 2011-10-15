@@ -1,6 +1,14 @@
+# unless VirtualBox::Global.global.host.network_interfaces.find {|int| int.name == 'vboxnet1'} 
+#   # the newly created host_interface seems to be immutable 8(
+#   # we can't set the name or the ip address... yet
+#   newi=VirtualBox::Global.global.host.network_interfaces.create
+#   newi.name # => 'vboxnetX'
+#   newi.ip_address # => '192.168.XX.1'
+# end
+
 Veewee::Session.declare({
     :cpu_count => '1',  :memory_size=> '384', 
-    :host_only_nic => nil, #nfs seems broken
+    :host_only_nic => nil, #nfs seems broken... host_only requires host_network configuration
     :bridge_nic => 'eth0',
     :disk_size => '20280', :disk_format => 'VDI', :hostiocache => 'off',
     :os_type_id => 'Ubuntu',
