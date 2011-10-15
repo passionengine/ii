@@ -6,7 +6,7 @@ Vagrant::Config.run do |config|
     chef_config.vm.forward_port "http", 80, 9080
     chef_config.vm.forward_port "chefapi", 443, 9443
     chef_config.vm.forward_port "chefgui", 444, 9444
-    chef_config.vm.network "33.33.33.10"
+    #chef_config.vm.network "33.33.33.10"
     chef_config.vm.customize do |vm|
       vm.name = "Chef Server"
       #vm.memory_size = 512
@@ -14,7 +14,7 @@ Vagrant::Config.run do |config|
     end
     #chef_config.vm.share_folder "v-chef-cache", "/chefcache", "cache" # mounts last
     chef_config.vm.provision :chef_solo do |chef|
-      #chef.nfs = true # this breaks, and you need to apt-get install nfs-kernel-server
+      #chef.nfs = true # seems broken, and you need to apt-get install nfs-kernel-server
       chef.data_bags_path = "data_bags" 
       chef.provisioning_path = "/vagrant/cache"
       chef.cookbooks_path = "cookbooks", "site-cookbooks"

@@ -2,3 +2,8 @@
 cache
 cookbooks
 tmp
+definitions
+.chef
+.vagrant
+iso
+.rvmrc

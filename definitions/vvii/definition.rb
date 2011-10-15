@@ -1,6 +1,6 @@
 Veewee::Session.declare({
     :cpu_count => '1',  :memory_size=> '384', 
-    :host_only_nic => 'vboxnet0',
+    :host_only_nic => nil, #nfs seems broken
     :bridge_nic => 'eth0',
     :disk_size => '20280', :disk_format => 'VDI', :hostiocache => 'off',
     :os_type_id => 'Ubuntu',
