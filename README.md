@@ -81,6 +81,11 @@ And continue the chef-solo provisioning....
 ```
 sudo su -
 chef-solo -c /vagrant/cache/solo.rb -j /vagrant/cache/dna.json -l debug
+gem update --system 1.3.7 #for some reason this doesn't seem to stick
+service chef-expander start
+service chef-solr start
+service chef-server start
+service chef-server-webui start
 ```
 
 This provisions the new vvii box with chef-solo.
