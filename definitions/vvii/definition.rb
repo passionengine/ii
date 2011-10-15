@@ -1,5 +1,7 @@
 Veewee::Session.declare({
     :cpu_count => '1',  :memory_size=> '384', 
+    :host_only_nic => 'vboxnet0',
+    :bridge_nic => 'eth0',
     :disk_size => '10140', :disk_format => 'VDI', :hostiocache => 'off',
     :os_type_id => 'Ubuntu',
     :iso_file => "ubuntu-10.04.3-server-i386.iso",
@@ -15,6 +17,7 @@ Veewee::Session.declare({
 #      'fb=false ',
       'debconf/frontend=noninteractive ',
       'vga16fb.modeset=0 ',
+      'interface=eth0 ',
       'console-setup/ask_detect=false console-setup/modelcode=pc105 console-setup/layoutcode=us ',
       'dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive ',
       'initrd=/install/initrd.gz -- <Enter>'
