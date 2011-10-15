@@ -2,7 +2,7 @@ Veewee::Session.declare({
     :cpu_count => '1',  :memory_size=> '384', 
     :host_only_nic => 'vboxnet0',
     :bridge_nic => 'eth0',
-    :disk_size => '10140', :disk_format => 'VDI', :hostiocache => 'off',
+    :disk_size => '20280', :disk_format => 'VDI', :hostiocache => 'off',
     :os_type_id => 'Ubuntu',
     :iso_file => "ubuntu-10.04.3-server-i386.iso",
     :iso_src => "http://releases.ubuntu.com/10.04.3/ubuntu-10.04.3-server-i386.iso",
