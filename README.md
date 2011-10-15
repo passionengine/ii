@@ -19,7 +19,7 @@ Install ruby and chef-client on ubuntu and xp with credentials to become new cli
 Getting Started
 ==========
 
-Download and install required gems from the Gemfile, and use vagrant from the bundle.
+Download and install required gems from the [Gemfile](https://github.com/passionengine/ii/blob/master/Gemfile#L7), and be sure to use vagrant from the bundle.
 
 ```
 git clone git://github.com/passionengine/ii.git
@@ -31,7 +31,7 @@ bundle install
 alias vagrant="bundle exec vagrant"
 ```
 
-Create a Vagrant basebox based on ubuntu-10.04 from the iso and install chef/puppet etc
+The VeeWee [vvii/definition.rb](https://github.com/passionengine/ii/blob/master/definitions/vvii/definition.rb) creates a Vagrant basebox from the ubuntu-10.04 iso with the help of our [preseed.cfg](https://github.com/passionengine/ii/blob/master/definitions/vvii/preseed.cfg) and [postinstall vagrant.sh](https://github.com/passionengine/ii/blob/master/definitions/vvii/vagrant.sh).
 
 ```
 vagrant basebox build vvii
@@ -41,7 +41,7 @@ vagrant box add vvii vvii.box
 ```
 
 Once you have the basebox defined and imported into your ~/.vagrant.d/boxes directory,
-it is available for referencing from the Vagrantfile.
+it is available for referencing from our [Vagrantfile](https://github.com/passionengine/ii/blob/master/Vagrantfile#L3).
 
 ```
 vagrant up
