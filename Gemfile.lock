@@ -15,7 +15,7 @@ GIT
 
 GIT
   remote: git://github.com/hh/veewee.git
-  revision: 625810cc6873bb01cc6956449e4f05b58aa519e4
+  revision: ca45db14256637f5c1d846046b4ea5926399801e
   branch: master
   specs:
     veewee (0.2.0)
