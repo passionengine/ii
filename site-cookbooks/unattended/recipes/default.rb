@@ -466,49 +466,68 @@ end
 # Wine does lots of downloading as it is installed... fonts etc
 # would be interesting to see how to cache it completely for no network access
 #package 'wine1.3' do # as wine1.3 isn't available on 10.04 etc
-package 'wine' do
-  response_file 'wine.seed' #windows font eula... maybe we should alert user
-end
 
 winehome=File.join(cache_dir,'winehome')
 directory winehome
 
 
 # might be nicer to have wine dump it to somewhere within the cache or target dir
-execute "wine #{local_driver_dir}/VBoxWindowsAdditions-x86.exe /S /extract /D=C:\\\\tmp" do
-  cwd winehome
-  environment ({'HOME'=>winehome})
-  creates "#{winehome}/.wine/drive_c/tmp/x86"
+if not File.exists? "#{winehome}/.wine/drive_c/tmp/x86"
+  package 'wine' do
+    response_file 'wine.seed' #windows font eula... maybe we should alert user
+  end
+  execute "wine #{local_driver_dir}/VBoxWindowsAdditions-x86.exe /S /extract /D=C:\\\\tmp" do
+    cwd winehome
+    environment ({'HOME'=>winehome})
+    #creates "#{winehome}/.wine/drive_c/tmp/x86"
+  end
 end
-execute "wine #{local_driver_dir}/VBoxWindowsAdditions-amd64.exe /S /extract /D=C:\\\\tmp" do
-  cwd winehome
-  environment ({'HOME'=>winehome})
-  creates "#{winehome}/.wine/drive_c/tmp/amd64"
+
+execute "cp -a #{winehome}/.wine/drive_c/tmp/x86 #{local_driver_dir}/VBoxWindowsAdditions-x86" do
+  creates "#{local_driver_dir}/VBoxWindowsAdditions-x86"
+end
+
+if not File.exists? "#{winehome}/.wine/drive_c/tmp/amd64"
+  package 'wine' do
+    response_file 'wine.seed' #windows font eula... maybe we should alert user
+  end
+  execute "wine #{local_driver_dir}/VBoxWindowsAdditions-amd64.exe /S /extract /D=C:\\\\tmp" do
+    cwd winehome
+    environment ({'HOME'=>winehome})
+    #creates "#{winehome}/.wine/drive_c/tmp/amd64"
+  end
 end
 
 execute "cp -a #{winehome}/.wine/drive_c/tmp/amd64 #{local_driver_dir}/VBoxWindowsAdditions-amd64" do
   creates "#{local_driver_dir}/VBoxWindowsAdditions-amd64"
 end
-execute "cp -a #{winehome}/.wine/drive_c/tmp/x86 #{local_driver_dir}/VBoxWindowsAdditions-x86" do
-  creates "#{local_driver_dir}/VBoxWindowsAdditions-x86"
-end
 
-execute "wine #{virtualbox_installer} -x -s -l -p C:\\\\vbox" do
-  cwd winehome
-  environment ({'HOME'=>winehome})
-  creates "#{winehome}/.wine/drive_c/vbox/common.cab"
+
+if not File.exists? "#{winehome}/.wine/drive_c/vbox/common.cab"
+  package 'wine' do
+    response_file 'wine.seed' #windows font eula... maybe we should alert user
+  end
+  execute "wine #{virtualbox_installer} -x -s -l -p C:\\\\vbox" do
+    cwd winehome
+    environment ({'HOME'=>winehome})
+    creates "#{winehome}/.wine/drive_c/vbox/common.cab"
+  end
 end
 
 execute "cp -a #{winehome}/.wine/drive_c/vbox/* #{ua_dir}install/packages/virtualbox/" do
   creates "#{ua_dir}install/packages/virtualbox/common.cab"
 end
 
-execute "wine #{dotnet_installer} /C /T:C:\\\\dotnet" do
-  cwd winehome
-  environment ({'HOME'=>winehome})
-  creates "#{winehome}/.wine/drive_c/dotnet/install.exe"
+if not File.exists? "#{winehome}/.wine/drive_c/dotnet/install.exe"
+  package 'wine' do
+    response_file 'wine.seed' #windows font eula... maybe we should alert user
+  end
+  execute "wine #{dotnet_installer} /C /T:C:\\\\dotnet" do
+    cwd winehome
+    environment ({'HOME'=>winehome})
+    creates "#{winehome}/.wine/drive_c/dotnet/install.exe"
+  end
 end
-
 directory "#{ua_dir}install/packages/microsoft/dotnet"
 execute "cp -a #{winehome}/.wine/drive_c/dotnet/* #{ua_dir}install/packages/microsoft/dotnet" do
   creates "#{ua_dir}install/packages/microsoft/dotnet/install.exe"
