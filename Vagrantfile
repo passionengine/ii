@@ -11,6 +11,9 @@ Vagrant::Config.run do |config|
       vm.name = "Chef Server"
       #vm.memory_size = 512
       vm.vram_size = 12
+      # bridged nic might need promisc... at some point
+      # VBoxManage modifyvm --nicpromisc2 allow-all
+
     end
     #chef_config.vm.share_folder "v-chef-cache", "/chefcache", "cache" # mounts last
     chef_config.vm.provision :chef_solo do |chef|
@@ -21,7 +24,8 @@ Vagrant::Config.run do |config|
       chef.add_recipe "pxe_dust::server"
       chef.add_recipe "pxe_knife"
       chef.add_recipe "dnsmasq"
-      chef.add_recipe "chef-bootstrap::apache-proxy"
+      chef.add_recipe "chef-bootstrap"
+      #chef.add_recipe "chef-bootstrap::apache-proxy"
       #chef.add_recipe "pxe_dust::ubuntu-studio"
       chef.add_recipe "unattended"
       
