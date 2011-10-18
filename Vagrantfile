@@ -22,7 +22,7 @@ Vagrant::Config.run do |config|
       chef.provisioning_path = "/vagrant/cache"
       chef.cookbooks_path = "cookbooks", "site-cookbooks"
       chef.add_recipe "pxe_dust::server"
-      chef.add_recipe "pxe_knife"
+      chef.add_recipe "pxe_chef"
       chef.add_recipe "dnsmasq"
       chef.add_recipe "chef-bootstrap"
       #chef.add_recipe "chef-bootstrap::apache-proxy"
@@ -38,9 +38,13 @@ Vagrant::Config.run do |config|
           "version" => "natty",
           "directory" => "/var/www",
           "user" => {
-            "fullname" => "Chris McClimans",
-            "username" => "chris",
-            "crypted_password" => "$6$0p1qarPw$pLagFhmT5GWGplneNF/sKM77rbdii8nHdl4Fbhl/sqwA7dWgNbFMjcSq97ITQqpj6FrL3Qi4OJaKyJvzaRHlt0"
+            "fullname" => ":ii is Ideal Infrastructure",
+            "username" => "ii",
+            # This should be able to be done cross-platform via ruby and not shelling out
+            # http://help.opscode.com/discussions/questions/253-user-resource-sha512-shadow-hash-generation
+            #salt specified so the hash is the same each time
+            "crypted_password" => `echo 'ii' | mkpasswd -m sha-512 -S vviivvii -s`
+            
           }
         },
         "samba" => {
