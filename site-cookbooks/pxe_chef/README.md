@@ -11,9 +11,9 @@ In progress
 Attributes
 ==========
 
-Attributes under the `pxe_knife` namespace.
+Attributes under the `pxe_chef` namespace.
 
-* `["pxe_dust"]["foo"]` - some interesting thing in the future
+* `["pxe_chef"]["foo"]` - some interesting thing in the future
 
 Templates
 =========
@@ -45,9 +45,9 @@ Create a role, `pxe_server`.
 
     name "pxe_server"
     description "PXE Dust Boot Server"
-    run_list("recipe[pxe_knife]")
+    run_list("recipe[pxe_chef]")
     default_attributes(
-      "pxe_knife" => {
+      "pxe_chef" => {
       "foo" => "bar"
       }
     )
