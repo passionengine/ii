@@ -4,17 +4,45 @@ set -e -x
 # etc., and remove optional things to trim down the machine.
 apt-get -y update
 apt-get -y upgrade
-apt-get -y install linux-headers-$(uname -r) chef-server-webui puppet
+apt-get -y install linux-headers-$(uname -r) #chef-server-webui puppet
 apt-get clean
 
-# update rubygems to 1.3.7
-gem install rubygems-update
-/var/lib/gems/1.8/bin/update_rubygems
-gem update --system 1.3.7
-# FATAL: Gem::InstallError: gem_package[transmission-simple] (transmission::default line 31)
-# had an error: multi_json requires RubyGems version >= 1.3.6
-gem install multi_json # fail when done in chef-solo, but not here FIXME
+# Install Ruby from source in /opt so that users of Vagrant
+# can install their own Rubies using packages or however.
+# We must install the 1.8.x series since Puppet doesn't support
+# Ruby 1.9 yet.
+wget http://ftp.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7-p334.tar.gz
+tar xvzf ruby-1.8.7-p334.tar.gz
+cd ruby-1.8.7-p334
+./configure --prefix=/opt/ruby
+make
+make install
+cd ..
+rm -rf ruby-1.8.7-p334*
 
+# Install RubyGems 1.7.2
+wget http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
+tar xzf rubygems-1.7.2.tgz
+cd rubygems-1.7.2
+/opt/ruby/bin/ruby setup.rb
+cd ..
+rm -rf rubygems-1.7.2*
+
+# Installing chef & Puppet
+/opt/ruby/bin/gem install chef --no-ri --no-rdoc
+/opt/ruby/bin/gem install puppet --no-ri --no-rdoc
+
+# Add /opt/ruby/bin to the global path as the last resort so
+# Ruby, RubyGems, and Chef/Puppet are visible
+echo 'PATH=$PATH:/opt/ruby/bin/'> /etc/profile.d/vagrantruby.sh
+
+# # update rubygems to 1.3.7
+# gem install rubygems-update
+# /var/lib/gems/1.8/bin/update_rubygems
+# gem update --system 1.3.7
+# # FATAL: Gem::InstallError: gem_package[transmission-simple] (transmission::default line 31)
+# # had an error: multi_json requires RubyGems version >= 1.3.6
+# gem install multi_json # fail when done in chef-solo, but not here FIXME
 
 # Setup sudo to allow no-password sudo for "admin"
 cp /etc/sudoers /etc/sudoers.orig
@@ -59,6 +87,16 @@ mkdir /etc/udev/rules.d/70-persistent-net.rules
 rm -rf /dev/.udev/
 rm -rf /lib/udev/rules.d/75-persistent-net-generator.rules
 
-echo "Adding a 2 sec delay to the interface up, to make the dhclient happy"
-echo "pre-up sleep 2" >> /etc/network/interfaces
+echo "Adding a 2 sec delay to the interface eth0 up, to make the dhclient happy"
+echo "Adding a a static setup with nat for the brige interface for 172.16.123.123 network"
+cat <<EOF >> /etc/network/interfaces
+pre-up sleep 2
+
+auto eth1
+iface eth1 inet static
+	address 172.16.123.123
+	netmask 255.255.255.0
+	up sleep 5; echo 1 > /proc/sys/net/ipv4/ip_forward ; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE ; service dnsmasq restart 
+EOF
+
 exit
