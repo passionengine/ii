@@ -17,24 +17,36 @@
 # limitations under the License.
 #
 
+require 'chef/file_cache'
+cache_dir = "#{Chef::Config[:file_cache_path]}/dnsmasq/"
+directory cache_dir
+
 package 'dnsmasq'
 service 'dnsmasq'
 
-template "/etc/dnsmasq.d/dhcp-proxy.conf" do
-  source "dhcp-proxy.conf.erb"
+template "/etc/dnsmasq.d/ii.conf" do
+  source "ii.conf.erb"
   mode "0644"
   #notifies :restart, "service[dnsmasq]" #FIXME: if I'm running  ubuntu sharing, it can't restart due to ports
 end
 
 # I'm in favor of using some type of new thing called...
 # remote_file_from_cache
-remote_file "/var/www/ipxe.pxe" do
+ipxe_cache = cache_dir + 'ipxe.pxe'
+ipxe_exe="/var/www/ipxe.exe"
+remote_file ipxe_cache do
   source "http://boot.ipxe.org/ipxe.pxe"
   checksum '9c5aa99005711f8c9ad2e00ecb8e98ecc1400d6317821beb8359dabc3f179766'
   mode '0644'
-  not_if { File.exists? "/var/www/ipxe.exe" }
+  not_if { File.exists? ipxe_cache }
+  #notifies :run, "execute[unzip -o #{zipfile}]", :immediately
 end
 
-execute "ln -s /var/www/ipxe.pxe /var/www/ipxe.pxe.0" do
+execute "cp -a #{ipxe_cache} #{ipxe_exe}" do
+  creates ipxe_exe
+end
+
+
+execute "ln -sf /var/www/ipxe.pxe /var/www/ipxe.pxe.0" do
   creates "/var/www/ipxe.pxe.0"
 end
