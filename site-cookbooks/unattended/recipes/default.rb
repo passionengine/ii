@@ -137,6 +137,7 @@ end
 
 
 package 'p7zip'
+package 'unzip'
 directory "#{cache_dir}drivers"
 directory "#{cache_dir}torrents"
 
@@ -424,7 +425,7 @@ end
 
 # http://technet.microsoft.com/en-us/sysinternals/bb896645.aspx
 procmon_exe="#{ua_dir}install/updates/common/Procmon.exe"
-procmon_exe_cache="#{ua_dir}install/updates/common/Procmon.exe"
+procmon_exe_cache="#{cache_dir}/Procmon.exe"
 remote_file procmon_exe_cache do
   mode "0755"
   backup false
@@ -554,12 +555,13 @@ end
 ##DMI
 dmi_zip="#{cache_dir}/dmidecode-2.9.zip"
 remote_file dmi_zip do
-  source "http://wpkg.org/files/3rd_party/dmidecode-2.9.zip"
-  mode "0755"
-  backup false
-  not_if { File.exists? dmi_zip }
   checksum "af408e584c4a882d9aa704e6c767b0f86dbab05901c086173f3475090725d2c5"
+  source "http://wpkg.org/files/3rd_party/dmidecode-2.9.zip"
+  not_if { File.exists? dmi_zip }
+  backup false
+  mode "0755"
 end
+
 execute "unzip -o #{dmi_zip}" do
   cwd "#{ua_dir}/install/drivers/"
   creates "#{ua_dir}/install/drivers/dmidecode-2.9/dmidecode.exe"
