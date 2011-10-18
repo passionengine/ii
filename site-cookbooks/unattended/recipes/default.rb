@@ -118,7 +118,7 @@ end
 # to /var/unattended/install/os/ISONAME
 # I think they need to be only 8 characters long
 
-Dir['#{cache_dir}/iso/*.iso'].each do |isofile|
+Dir["#{cache_dir}/iso/*.iso"].each do |isofile|
   filename=File.basename(isofile)
   shortname=filename.split('.')[0]
   bash "copy contents of #{filename} to #{ua_dir}/install/os/" do
