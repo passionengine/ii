@@ -1,6 +1,8 @@
 require 'virtualbox'
 require 'fileutils'
 require 'chef'
+# Would be interesting to store all the credentials
+# for chef-client/server in the cache
 Chef::Config.from_file '.chef/knife.rb'
 
 
@@ -49,14 +51,24 @@ def createvbox(os=:windows,x64=false)
 
   # this will boot from nerk only if we can't boot from disk
   vbox.boot_order=[:hard_disk ,:network,:null,:null]
-  vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/BootFile']='pxelinux.0'
-  vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/TFTPPrefix']='/var/www/'
   
 
   vbox.extra_data['VBoxInternal/Devices/VMMDev/0/Config/KeepCredentials']='1'
 
+  # This works when wanting to test all virtually
+  # nic = vbox.network_adapters[0]
+  # nic.attachment_type = :nat
+  # requires a real tftp server
+  ##`VBoxManage modifyvm "#{vbox.name}" --nattftpserver1 192.168.2.7`
+  # vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/TFTPPrefix']='/var/www/'
+  # vbox.extra_data['VBoxInternal/Devices/pcnet/0/LUN#0/Config/BootFile']='pxelinux.0'  ##`VBoxManage modifyvm "#{vbox.name}" --nattftpfile1 pxelinux.0`
+  # nic.enabled = true
+  # nic.save
+
+  # This is what we do when we want to test a real pxe implementation
   nic = vbox.network_adapters[0]
-  nic.attachment_type = :nat
+  nic.attachment_type = :bridged
+  nic.bridged_interface = 'eth0'
   nic.enabled = true
   nic.save
   
@@ -88,14 +100,13 @@ def createvbox(os=:windows,x64=false)
 
   vbox.save
   
-  # requires a real tftp server
-  #`VBoxManage modifyvm "#{vbox.name}" --nattftpserver1 192.168.2.7`
-  #`VBoxManage modifyvm "#{vbox.name}" --nattftpfile1 pxelinux.0`
 
+  # we want to update the server to know we created a virtual box
+  # However, long term this should be done by looking at dhcp and tftp requests on the wire
   if not Chef::DataBag.cdb_list.include? 'virtualboxen'
     Chef::DataBag.json_create({'name'=>'virtualboxen'}).save
   end
-
+  
   Chef::DataBagItem.json_create({
       'data_bag'=>'virtualboxen',
       'raw_data'=> {
