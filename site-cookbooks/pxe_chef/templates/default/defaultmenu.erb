@@ -4,7 +4,11 @@ MENU TITLE What would you like to do to this computer?
 MENU INCLUDE pxelinux.cfg/graphics.conf
 <% case @default %>
 <% when :windows %>
-MENU AUTOBOOT Installing Windows in # seconds
+MENU AUTOBOOT Installing Windows XP in # seconds
+timeout 50
+TOTALTIMEOUT 100
+<% when :win7e %>
+MENU AUTOBOOT Installing Windows 7 Enterprise in # seconds
 timeout 50
 TOTALTIMEOUT 100
 <% when :ubuntu %>
@@ -29,18 +33,23 @@ label iixp
   # Add options (z_user=..., z_path=..., etc.) to this line.
   append initrd=unattended-installer/initrd z_user=guest z_pass=guest z_path=//<%= node[:ipaddress] %>/install
 
+label win7e
+  menu label Start Windows 7 pxeboot.n12 as pxeboot.0
+  <%= 'MENU DEFAULT' if @default == :win7e %>
+  kernel \system1\pxeboot.0 # which must be boot.wim#1/Windows/Boot/PXE/pxeboot.n12
+
 label installi386
 	menu label Erase everything and install ^Linux
   <%= 'MENU DEFAULT' if @default == :ubuntu %>
 	kernel ubuntu-installer/i386/linux
-	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/i386/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=iiSFD netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/i386/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=thiisbox netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
 
 
 label install
 	menu label Erase everything and setup a ^Super Computer
   <%= 'MENU DEFAULT' if @default == :ubuntu64 %>
 	kernel ubuntu-installer/<%= node[:pxe_dust][:arch] %>/linux
-	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=iiSFD netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
+	append auto=true priority=critical interface=eth0 vga16fb.modeset=0 initrd=ubuntu-installer/<%= node[:pxe_dust][:arch] %>/initrd.gz netcfg/disabledhcp=false locale=en_NZ console-setup/ask_detect=false debian-installer/keymap=us keyboard-configuration/layoutcode=us console-setup/layoutcode=us netcfg/get_hostname=thiisbox netcfg/chooseinterface=eth0 url=http://<%= node[:ipaddress] %>/preseed.cfg dbg/flags=all-x DEBCONF_DEBUG=5 DEBCONF_INTERFACE=noninteractive
 
 
 label local

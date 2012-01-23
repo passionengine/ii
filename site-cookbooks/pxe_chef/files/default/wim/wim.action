@@ -1,0 +1,7 @@
+rename //setup.exe setup.new
+rename //sources/setup.exe setup.new
+add //windows/system32 winpeshl.ini
+mkdir //sources new
+add //souces/new install.cmd
+add //sources/new netamd.inf
+add //sources/new pcntpci5.sys

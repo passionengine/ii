@@ -3,6 +3,11 @@ Description
 
 Configures a tftpd server for serving applications and installers over PXE.
 
+To debug:
+Use the following display filter in wireshark:
+
+(!(tftp.opcode == 4)) && !(tftp.opcode == 3)
+
 Requirements
 ============
 

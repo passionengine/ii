@@ -44,7 +44,14 @@ end
 template "#{pxe_root}/pxelinux.cfg/default-winxp" do
   source 'defaultmenu.erb'
   variables ({
-      :default => :windows
+      :default => :winxp
+    })
+  mode "0644" 
+end
+template "#{pxe_root}/pxelinux.cfg/default-win7e" do
+  source 'defaultmenu.erb'
+  variables ({
+      :default => :win7e
     })
   mode "0644" 
 end

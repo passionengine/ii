@@ -1,0 +1,16 @@
+MENU TITLE Setup Menu
+    
+LABEL Main Menu
+      MENU LABEL Return to Main Menu
+      KERNEL vesamenu.c32
+      APPEND pxelinux.cfg/default
+    
+LABEL Mandriva20091x64
+MENU LABEL Mandriva 2009.1 64 bit
+KERNEL images/Mandriva/vmlinuz-Mandriva20091x64
+APPEND initrd=images/Mandriva/Mandriva20091x64.rdz ramdisk_size=128000 vga=788 root=/dev/ram3 rw automatic=method:nfs,network:dhcp,server:bootserver1,directory:/swrepo/mounts/mandriva-linux-pwp-2009.1-x86_64/x86_64
+
+LABEL Mandriva20091x32
+MENU LABEL Mandriva 2009.1 32 bit
+KERNEL images/Mandriva/vmlinuz-Mandriva20091i586
+APPEND initrd=images/Mandriva/Mandriva20091i586.rdz ramdisk_size=128000 vga=788 root=/dev/ram3 rw automatic=method:nfs,network:dhcp,server:bootserver1,directory:/swrepo/mounts/mandriva-linux-pwp-2009.1-i586/i586

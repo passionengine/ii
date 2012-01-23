@@ -1,0 +1,104 @@
+MENU TITLE Setup Menu
+F1 help-rhel.txt pxebootsplash-help.jpg
+
+    
+LABEL Main Menu
+      MENU LABEL Return to Main Menu
+      KERNEL vesamenu.c32
+      APPEND pxelinux.cfg/default
+    
+LABEL rhel5x64
+MENU LABEL RHEL 5.3 64 bit Installer
+kernel images/RHEL5/vmlinuzx64
+append initrd=images/RHEL5/initrdx64.img ramdisk_size=8262 method=nfs:bootserver1:/swrepo/ISO/Linux/RedHat/x86_64/5.3-DVD ip=dhcp
+TEXT HELP
+Press F1 for RHEL kickstart option
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless1)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test1
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless2)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test2
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless3)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test3
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless4)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test4
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless5)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test5
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless6)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test6
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless7)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test7
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless8)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test8
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless9)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test9
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless10)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test10
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
+
+label rhel53_x86_64network
+MENU LABEL RHEL 5.3 64 bit Boot from Network (diskless11)
+    kernel images/RHEL53-network/vmlinuz
+    append  initrd=images/RHEL53-network/initrd.img root=/dev/ram0 init=disklessrc NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5 ramdisk_size=28753 ETHERNET=eth0 SNAPSHOT=test11
+TEXT HELP
+Run from network, using NFS server root directory. NFSROOT=192.168.88.1:/swrepo/diskless/x86_64/RHEL5
+ENDTEXT
